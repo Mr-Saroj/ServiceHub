@@ -49,8 +49,8 @@ function CustomerDashboard() {
                 <i className="fas fa-plus-circle"></i> Create Service Request
               </a>
             </li>
-            <li><a href="#"><i className="fas fa-list-alt"></i> My Requests</a></li>
-            <li><a href="#"><i className="fas fa-calendar-alt"></i> Appointments</a></li>
+            
+            
             <li><a href="#"><i className="fas fa-credit-card"></i> Payment History</a></li>
             <li><a href="#"><i className="fas fa-star"></i> Reviews</a></li>
             <li><a href="#"><i className="fas fa-user"></i> Profile</a></li>
