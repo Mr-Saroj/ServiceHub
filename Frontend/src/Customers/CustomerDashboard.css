@@ -358,3 +358,78 @@ tr:hover {
     gap: 10px;
     margin-top: 15px;
 }
+/* Order Tracking Dropdown */
+.track-dropdown {
+    padding: 15px;
+    background-color: #f5f7fa;
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    margin-top: 10px;
+}
+
+.track-step {
+    padding: 8px 0;
+    font-size: 14px;
+    border-left: 4px solid #ccc;
+    padding-left: 10px;
+    margin-bottom: 5px;
+}
+
+.track-step.completed {
+    border-color: #2ecc71;
+    color: #2ecc71;
+    font-weight: 500;
+}
+
+.track-step.active {
+    border-color: #f39c12;
+    color: #f39c12;
+    font-weight: 500;
+}
+
+.review-service-card {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.give-review-card {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  max-width: 500px;
+}
+
+.star-rating {
+  font-size: 26px;
+  margin: 15px 0;
+  cursor: pointer;
+}
+
+.star-rating .fa-star {
+  color: #ccc;
+  margin-right: 8px;
+  transition: 0.3s;
+}
+
+.star-rating .active-star {
+  color: #f39c12;
+}
+
+.review-textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+  resize: none;
+}
+
+.review-buttons {
+  display: flex;
+  gap: 10px;
+}
