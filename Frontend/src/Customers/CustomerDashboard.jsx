@@ -7,7 +7,6 @@ function CustomerDashboard() {
   const [location, setLocation] = useState("");
   const [openTrackId, setOpenTrackId] = useState(null);
 
-  // ⭐ Review States
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -46,41 +45,36 @@ function CustomerDashboard() {
 
         <div className="sidebar-menu">
           <ul>
-            <li>
-              <a
-                href="#"
-                className={activePage === "dashboard" ? "active" : ""}
-                onClick={() => setActivePage("dashboard")}
-              >
-                <i className="fas fa-tachometer-alt"></i> Dashboard
-              </a>
+
+            <li
+              className={activePage === "dashboard" ? "active" : ""}
+              onClick={() => setActivePage("dashboard")}
+            >
+              <i className="fas fa-tachometer-alt"></i>
+              <span>Dashboard</span>
+            </li>
+
+            <li
+              className={activePage === "create" ? "active" : ""}
+              onClick={() => setActivePage("create")}
+            >
+              <i className="fas fa-plus-circle"></i>
+              <span>Create Service Request</span>
+            </li>
+
+            <li
+              className={activePage === "reviews" ? "active" : ""}
+              onClick={() => setActivePage("reviews")}
+            >
+              <i className="fas fa-star"></i>
+              <span>Reviews</span>
             </li>
 
             <li>
-              <a
-                href="#"
-                className={activePage === "create" ? "active" : ""}
-                onClick={() => setActivePage("create")}
-              >
-                <i className="fas fa-plus-circle"></i> Create Service Request
-              </a>
+              <i className="fas fa-sign-out-alt"></i>
+              <span>Logout</span>
             </li>
 
-            <li>
-              <a
-                href="#"
-                className={activePage === "reviews" ? "active" : ""}
-                onClick={() => setActivePage("reviews")}
-              >
-                <i className="fas fa-star"></i> Reviews
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                <i className="fas fa-sign-out-alt"></i> Logout
-              </a>
-            </li>
           </ul>
         </div>
       </aside>
@@ -102,7 +96,7 @@ function CustomerDashboard() {
         <div className="dashboard-content">
           <div className="card">
 
-            {/* ================= DASHBOARD TABLE ================= */}
+            {/* DASHBOARD */}
             {activePage === "dashboard" && (
               <div className="table-container">
                 <table>
@@ -157,7 +151,7 @@ function CustomerDashboard() {
               </div>
             )}
 
-            {/* ================= CREATE FORM ================= */}
+            {/* CREATE REQUEST */}
             {activePage === "create" && (
               <div className="request-form">
                 <h3>Create Service Request</h3>
@@ -202,7 +196,7 @@ function CustomerDashboard() {
               </div>
             )}
 
-            {/* ================= REVIEWS PAGE ================= */}
+            {/* REVIEWS */}
             {activePage === "reviews" && (
               <div className="reviews-section">
 
@@ -215,9 +209,7 @@ function CustomerDashboard() {
                       <p>Technician: Rahul Sharma</p>
                       <button
                         className="btn btn-success"
-                        onClick={() =>
-                          setSelectedService("Plumbing Service")
-                        }
+                        onClick={() => setSelectedService("Plumbing Service")}
                       >
                         Give Review
                       </button>
