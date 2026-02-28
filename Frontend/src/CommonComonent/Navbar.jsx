@@ -1,25 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Navbar.css";
 import { NavLink, Outlet } from "react-router-dom";
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const handleLinkClick = () => {
-    setMenuOpen(false); // Close menu on mobile after click
+    setMenuOpen(false);
   };
+
+  // Scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div>
-      <header className="sh-header">
-        <div className="container header-container">
-          <NavLink to="/" className="logo" onClick={handleLinkClick}>
+      <header className={`navbar ${scrolled ? "navbar-scrolled" : ""}`}>
+        <div className="navbar-container">
+
+          <NavLink to="/" className="navbar-logo" onClick={handleLinkClick}>
             <i className="fas fa-tools"></i>
             ServiceHub
           </NavLink>
 
           <button
-            className="mobile-menu-toggle"
+            className="navbar-toggle"
             aria-label="Toggle Menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(!menuOpen)}
@@ -27,48 +43,58 @@ function Navbar() {
             <i className={menuOpen ? "fas fa-times" : "fas fa-bars"}></i>
           </button>
 
-          <nav className={menuOpen ? "active" : ""}>
+          <nav className={`navbar-menu ${menuOpen ? "open" : ""}`}>
             <ul>
               <li>
                 <NavLink
                   to="/"
                   onClick={handleLinkClick}
-                  className={({ isActive }) => (isActive ? "active-link" : "")}
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
                 >
                   Home
                 </NavLink>
               </li>
+
               <li>
                 <NavLink
                   to="/service"
                   onClick={handleLinkClick}
-                  className={({ isActive }) => (isActive ? "active-link" : "")}
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
                 >
                   Services
                 </NavLink>
               </li>
+
               <li>
                 <NavLink
                   to="/login"
                   onClick={handleLinkClick}
-                  className={({ isActive }) => (isActive ? "active-link" : "")}
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
                 >
                   Login
                 </NavLink>
               </li>
+
               <li>
                 <NavLink
                   to="/register"
-                  className={({ isActive }) =>
-                    "btn btn-outline " + (isActive ? "active-link" : "")
-                  }
                   onClick={handleLinkClick}
+                  className={({ isActive }) =>
+                    isActive ? "nav-btn active" : "nav-btn"
+                  }
                 >
                   Register
                 </NavLink>
               </li>
             </ul>
           </nav>
+
         </div>
       </header>
       <Outlet />
