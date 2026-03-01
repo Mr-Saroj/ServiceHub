@@ -1,12 +1,65 @@
 import { useState } from "react";
 import "./Register.css";
-import { Link } from "react-router-dom";
-function Register() {
-  const [role, setRole] = useState("customer");
+import { Link, useNavigate } from "react-router-dom";
 
-  const handleSubmit = (e) => {
+function Register() {
+  const navigate = useNavigate();
+
+  const [role, setRole] = useState("CUSTOMER");
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Account Created Successfully!");
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    const requestData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: role,
+    };
+
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const message = await response.text();
+
+      if (response.ok) {
+        alert("Account Created Successfully!");
+        
+        // 🔥 Redirect to Login Page
+        navigate("/login");
+
+      } else {
+        alert(message);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Server Error!");
+    }
   };
 
   return (
@@ -29,6 +82,7 @@ function Register() {
                 className="form-control"
                 placeholder="Enter your full name"
                 required
+                onChange={handleChange}
               />
             </div>
           </div>
@@ -44,6 +98,7 @@ function Register() {
                 className="form-control"
                 placeholder="Enter your email"
                 required
+                onChange={handleChange}
               />
             </div>
           </div>
@@ -59,21 +114,23 @@ function Register() {
                 className="form-control"
                 placeholder="Create a password"
                 required
+                onChange={handleChange}
               />
             </div>
           </div>
 
           {/* Confirm Password */}
           <div className="form-group">
-            <label htmlFor="confirm-password">Confirm Password</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <div className="input-group">
               <i className="fas fa-lock"></i>
               <input
                 type="password"
-                id="confirm-password"
+                id="confirmPassword"
                 className="form-control"
                 placeholder="Confirm your password"
                 required
+                onChange={handleChange}
               />
             </div>
           </div>
@@ -85,13 +142,12 @@ function Register() {
               <div className="role-option">
                 <input
                   type="radio"
-                  id="customer"
                   name="role"
-                  value="customer"
-                  checked={role === "customer"}
-                  onChange={() => setRole("customer")}
+                  value="CUSTOMER"
+                  checked={role === "CUSTOMER"}
+                  onChange={() => setRole("CUSTOMER")}
                 />
-                <label htmlFor="customer">
+                <label>
                   <i className="fas fa-user"></i>
                   Customer
                 </label>
@@ -100,13 +156,12 @@ function Register() {
               <div className="role-option">
                 <input
                   type="radio"
-                  id="technician"
                   name="role"
-                  value="technician"
-                  checked={role === "technician"}
-                  onChange={() => setRole("technician")}
+                  value="TECHNICIAN"
+                  checked={role === "TECHNICIAN"}
+                  onChange={() => setRole("TECHNICIAN")}
                 />
-                <label htmlFor="technician">
+                <label>
                   <i className="fas fa-tools"></i>
                   Technician
                 </label>
@@ -123,7 +178,6 @@ function Register() {
             </label>
           </div>
 
-          {/* Updated Button Class */}
           <button type="submit" className="register-btn">
             Create Account
           </button>
