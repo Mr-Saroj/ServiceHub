@@ -1,10 +1,59 @@
+import { useState } from "react";
 import "./Login.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
 function Login() {
 
-    const handleSubmit = (e) => {
+    const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+        email: "",
+        password: ""
+    });
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.id]: e.target.value
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        alert("Login Successful!");
+
+        try {
+            const response = await fetch("http://localhost:8080/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+
+                alert("Login Successful!");
+
+                // Save user in localStorage
+                localStorage.setItem("user", JSON.stringify(data));
+
+                // 🔥 Role Based Redirect
+                if (data.role === "CUSTOMER") {
+                    navigate("/customerdashboard");
+                } else if (data.role === "TECHNICIAN") {
+                    navigate("/techniciandashboard");
+                }
+
+            } else {
+                alert(data);
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Server Error!");
+        }
     };
 
     return (
@@ -16,6 +65,7 @@ function Login() {
                 </div>
 
                 <form onSubmit={handleSubmit}>
+
                     {/* Email */}
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
@@ -27,6 +77,7 @@ function Login() {
                                 className="form-control"
                                 placeholder="Enter your email"
                                 required
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
@@ -42,11 +93,11 @@ function Login() {
                                 className="form-control"
                                 placeholder="Enter your password"
                                 required
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
 
-                    {/* Options */}
                     <div className="form-options">
                         <div className="checkbox-group">
                             <input type="checkbox" id="remember" />

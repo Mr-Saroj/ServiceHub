@@ -3,6 +3,8 @@ package in.sp.main.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import in.sp.main.dto.LoginRequestDTO;
+import in.sp.main.dto.LoginResponseDTO;
 import in.sp.main.dto.RegisterRequestDTO;
 import in.sp.main.entity.User;
 import in.sp.main.repository.UserRepository;
@@ -31,5 +33,21 @@ public class UserService {
         userRepository.save(user);
 
         return "User Registered Successfully!";
+    }
+    public LoginResponseDTO loginUser(LoginRequestDTO dto) {
+
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found!"));
+
+        if (!user.getPassword().equals(dto.getPassword())) {
+            throw new RuntimeException("Invalid password!");
+        }
+
+        return new LoginResponseDTO(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole()
+        );
     }
 }
