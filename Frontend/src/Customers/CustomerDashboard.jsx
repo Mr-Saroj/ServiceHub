@@ -1,16 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./CustomerDashboard.css";
+import { useNavigate } from "react-router-dom";
 
 function CustomerDashboard() {
+
+  const navigate = useNavigate();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
   const [location, setLocation] = useState("");
   const [openTrackId, setOpenTrackId] = useState(null);
-
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [selectedService, setSelectedService] = useState(null);
+
+  const [userName, setUserName] = useState("");
+
+  // 🔐 Check Login & Load User
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+
+      if (payload.role !== "CUSTOMER") {
+        navigate("/login");
+        return;
+      }
+
+      setUserName(payload.sub); // email used in token
+
+    } catch (error) {
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  // 🚪 Logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   const handleLocation = () => {
     if (navigator.geolocation) {
@@ -45,7 +81,6 @@ function CustomerDashboard() {
 
         <div className="sidebar-menu">
           <ul>
-
             <li
               className={activePage === "dashboard" ? "active" : ""}
               onClick={() => setActivePage("dashboard")}
@@ -70,11 +105,10 @@ function CustomerDashboard() {
               <span>Reviews</span>
             </li>
 
-            <li>
+            <li onClick={handleLogout}>
               <i className="fas fa-sign-out-alt"></i>
               <span>Logout</span>
             </li>
-
           </ul>
         </div>
       </aside>
@@ -83,13 +117,15 @@ function CustomerDashboard() {
       <main className="main-content">
         <div className="header">
           <div className="welcome-section">
-            <h1>Welcome back, John!</h1>
+            <h1>Welcome back, {userName}!</h1>
             <p>Manage your service requests easily</p>
           </div>
 
           <div className="user-info">
-            <div className="user-avatar">JD</div>
-            <div className="user-name">John Doe</div>
+            <div className="user-avatar">
+              {userName ? userName.charAt(0).toUpperCase() : ""}
+            </div>
+            <div className="user-name">{userName}</div>
           </div>
         </div>
 
@@ -109,7 +145,6 @@ function CustomerDashboard() {
                       <th>Action</th>
                     </tr>
                   </thead>
-
                   <tbody>
                     <tr>
                       <td>#SR001</td>
@@ -199,7 +234,6 @@ function CustomerDashboard() {
             {/* REVIEWS */}
             {activePage === "reviews" && (
               <div className="reviews-section">
-
                 {!selectedService ? (
                   <>
                     <h3>Completed Services</h3>
@@ -207,6 +241,7 @@ function CustomerDashboard() {
                     <div className="review-service-card">
                       <h4>Plumbing Service</h4>
                       <p>Technician: Rahul Sharma</p>
+
                       <button
                         className="btn btn-success"
                         onClick={() => setSelectedService("Plumbing Service")}
@@ -262,7 +297,6 @@ function CustomerDashboard() {
                     </div>
                   </div>
                 )}
-
               </div>
             )}
 

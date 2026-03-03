@@ -4,8 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
 import in.sp.main.dto.LoginRequestDTO;
-import in.sp.main.dto.LoginResponseDTO;
+
 import in.sp.main.dto.RegisterRequestDTO;
 import in.sp.main.service.UserService;
 
@@ -27,13 +28,9 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
-
-        try {
-            LoginResponseDTO response = userService.loginUser(dto);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<String> login(@RequestBody LoginRequestDTO dto) {
+        String token = userService.loginUser(dto);
+        return ResponseEntity.ok(token);   // ✅ return token only
     }
+    
 }

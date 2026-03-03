@@ -15,14 +15,21 @@ function Register() {
   });
 
   const handleChange = (e) => {
+    const { id, value } = e.target;
+
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value,
+      [id]: value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.name || !formData.email || !formData.password) {
+      alert("Please fill all fields!");
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
@@ -30,35 +37,43 @@ function Register() {
     }
 
     const requestData = {
-      name: formData.name,
-      email: formData.email,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
       password: formData.password,
       role: role,
     };
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
+      const response = await fetch(
+        "http://localhost:8080/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
 
       const message = await response.text();
 
       if (response.ok) {
         alert("Account Created Successfully!");
-        
-        // 🔥 Redirect to Login Page
-        navigate("/login");
 
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
+
+        navigate("/login");
       } else {
-        alert(message);
+        alert(message || "Registration failed!");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Server Error!");
+      alert("Server Error! Please try again.");
     }
   };
 
@@ -82,6 +97,7 @@ function Register() {
                 className="form-control"
                 placeholder="Enter your full name"
                 required
+                value={formData.name}
                 onChange={handleChange}
               />
             </div>
@@ -98,6 +114,7 @@ function Register() {
                 className="form-control"
                 placeholder="Enter your email"
                 required
+                value={formData.email}
                 onChange={handleChange}
               />
             </div>
@@ -114,6 +131,7 @@ function Register() {
                 className="form-control"
                 placeholder="Create a password"
                 required
+                value={formData.password}
                 onChange={handleChange}
               />
             </div>
@@ -130,22 +148,29 @@ function Register() {
                 className="form-control"
                 placeholder="Confirm your password"
                 required
+                value={formData.confirmPassword}
                 onChange={handleChange}
               />
             </div>
           </div>
 
-          {/* Role Selection */}
+          {/* Role Selection (Highlight Fixed) */}
           <div className="form-group">
             <label>I am a:</label>
             <div className="role-selection">
-              <div className="role-option">
+
+              <div
+                className={`role-option ${
+                  role === "CUSTOMER" ? "active" : ""
+                }`}
+                onClick={() => setRole("CUSTOMER")}
+              >
                 <input
                   type="radio"
                   name="role"
                   value="CUSTOMER"
                   checked={role === "CUSTOMER"}
-                  onChange={() => setRole("CUSTOMER")}
+                  readOnly
                 />
                 <label>
                   <i className="fas fa-user"></i>
@@ -153,19 +178,25 @@ function Register() {
                 </label>
               </div>
 
-              <div className="role-option">
+              <div
+                className={`role-option ${
+                  role === "TECHNICIAN" ? "active" : ""
+                }`}
+                onClick={() => setRole("TECHNICIAN")}
+              >
                 <input
                   type="radio"
                   name="role"
                   value="TECHNICIAN"
                   checked={role === "TECHNICIAN"}
-                  onChange={() => setRole("TECHNICIAN")}
+                  readOnly
                 />
                 <label>
                   <i className="fas fa-tools"></i>
                   Technician
                 </label>
               </div>
+
             </div>
           </div>
 

@@ -18,44 +18,48 @@ function Login() {
         });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+   const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        try {
-            const response = await fetch("http://localhost:8080/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(formData),
-            });
+    try {
+        const response = await fetch("http://localhost:8080/api/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+        });
 
-            const data = await response.json();
-
-            if (response.ok) {
-
-                alert("Login Successful!");
-
-                // Save user in localStorage
-                localStorage.setItem("user", JSON.stringify(data));
-
-                // 🔥 Role Based Redirect
-                if (data.role === "CUSTOMER") {
-                    navigate("/customerdashboard");
-                } else if (data.role === "TECHNICIAN") {
-                    navigate("/techniciandashboard");
-                }
-
-            } else {
-                alert(data);
-            }
-
-        } catch (error) {
-            console.error("Error:", error);
-            alert("Server Error!");
+        if (!response.ok) {
+            const errorText = await response.text();
+            alert(errorText);
+            return;
         }
-    };
 
+        let token = await response.text();
+
+        // ✅ Remove Bearer if backend sends it
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        localStorage.setItem("token", token);
+
+        alert("Login Successful!");
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+
+        if (payload.role === "CUSTOMER") {
+            navigate("/customerdashboard");
+        } else if (payload.role === "TECHNICIAN") {
+            navigate("/techniciandashboard");
+        }
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Server Error!");
+    }
+};
     return (
         <main className="login-main">
             <div className="login-container">
