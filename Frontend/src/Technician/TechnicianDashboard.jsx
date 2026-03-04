@@ -25,18 +25,47 @@ function TechnicianDashboard() {
 
       if (payload.role !== "TECHNICIAN") {
         navigate("/login");
+        return;
       }
 
-      setTechnicianName(payload.name || "Technician");
+      // Temporary fallback → show email until DB loads
+      setTechnicianName(payload.sub);
 
+      fetchProfile(token);
       fetchAvailableRequests(token);
       fetchMyJobs(token);
       fetchReviews(token);
+
     } catch (error) {
       console.error("Invalid token");
       navigate("/login");
     }
   }, [navigate]);
+
+  /* ================= FETCH PROFILE FROM DATABASE ================= */
+  const fetchProfile = async (token) => {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/technician/profile",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+
+        // 🔥 FIX HERE → use data.name NOT data.fullName
+        if (data.name) {
+          setTechnicianName(data.name);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   /* ================= FETCH AVAILABLE ================= */
   const fetchAvailableRequests = async (token) => {
@@ -97,7 +126,7 @@ function TechnicianDashboard() {
         setReviews(data);
       }
     } catch (error) {
-      console.error(error);
+        console.error(error);
     }
   };
 
@@ -213,7 +242,6 @@ function TechnicianDashboard() {
       </aside>
 
       <main className="main-content">
-
         {activePage === "dashboard" && (
           <>
             <div className="header">
@@ -229,7 +257,9 @@ function TechnicianDashboard() {
 
                 <div className="profile-card">
                   <div className="profile-avatar">
-                    {technicianName.charAt(0)}
+                    {technicianName
+                      ? technicianName.charAt(0).toUpperCase()
+                      : ""}
                   </div>
                   <div className="profile-info">
                     <h3>{technicianName}</h3>

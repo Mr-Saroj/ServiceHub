@@ -57,4 +57,9 @@ public class UserService {
         // ✅ Return JWT token only
         return jwtUtil.generateToken(user.getEmail(), user.getRole());
     }
+ // ================= GET USER BY EMAIL =================
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

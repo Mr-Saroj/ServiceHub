@@ -14,10 +14,42 @@ function CustomerDashboard() {
   const [hover, setHover] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [selectedService, setSelectedService] = useState(null);
-
   const [userName, setUserName] = useState("");
 
-  // 🔐 Check Login & Load User
+  // ✅ STATES
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState("");
+  const [problemDescription, setProblemDescription] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [damagePhoto, setDamagePhoto] = useState(null); // ✅ NEW
+
+  // ===============================
+  // 🔐 CHECK LOGIN
+  // ===============================
+
+  const fetchProfile = async (token) => {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/customer/profile",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.fullName) {
+          setUserName(data.fullName);
+        }
+      }
+    } catch (error) {
+      console.error("Profile fetch error:", error);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -34,7 +66,8 @@ function CustomerDashboard() {
         return;
       }
 
-      setUserName(payload.sub); // email used in token
+      setUserName(payload.sub);
+      fetchProfile(token);
 
     } catch (error) {
       localStorage.removeItem("token");
@@ -42,28 +75,97 @@ function CustomerDashboard() {
     }
   }, [navigate]);
 
+  // ===============================
+  // 📦 FETCH CATEGORIES
+  // ===============================
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/categories")
+      .then(res => res.json())
+      .then(data => setCategories(data))
+      .catch(err => console.error("Category fetch error:", err));
+  }, []);
+
+  // ===============================
+  // 📍 LOCATION
+  // ===============================
+
+  const handleLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+
+        setLocation(
+          `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`
+        );
+      });
+    }
+  };
+
+  // ===============================
+  // 📨 SUBMIT REQUEST (UPDATED)
+  // ===============================
+
+  const handleSubmitRequest = async () => {
+
+    const token = localStorage.getItem("token");
+
+    if (!categoryId || !problemDescription || !location || !damagePhoto) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("categoryId", categoryId);
+    formData.append("problemDescription", problemDescription);
+    formData.append("locationAddress", location);
+    formData.append("latitude", latitude);
+    formData.append("longitude", longitude);
+    formData.append("damagePhoto", damagePhoto); // ✅ FILE
+
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/customer/requests",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        alert("Service Request Submitted Successfully!");
+
+        setCategoryId("");
+        setProblemDescription("");
+        setLocation("");
+        setLatitude("");
+        setLongitude("");
+        setDamagePhoto(null);
+        setActivePage("dashboard");
+
+      } else {
+        alert("Failed to submit request");
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+    }
+  };
+
   // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
-  const handleLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setLocation(
-          `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`
-        );
-      });
-    } else {
-      alert("Geolocation not supported");
-    }
-  };
-
   return (
     <div className="dashboard-container">
 
-      {/* Mobile Toggle */}
       <button
         className="mobile-menu-toggle"
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -71,7 +173,6 @@ function CustomerDashboard() {
         <i className="fas fa-bars"></i>
       </button>
 
-      {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? "active" : ""}`}>
         <div className="sidebar-header">
           <h2>
@@ -97,14 +198,6 @@ function CustomerDashboard() {
               <span>Create Service Request</span>
             </li>
 
-            <li
-              className={activePage === "reviews" ? "active" : ""}
-              onClick={() => setActivePage("reviews")}
-            >
-              <i className="fas fa-star"></i>
-              <span>Reviews</span>
-            </li>
-
             <li onClick={handleLogout}>
               <i className="fas fa-sign-out-alt"></i>
               <span>Logout</span>
@@ -113,7 +206,6 @@ function CustomerDashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="main-content">
         <div className="header">
           <div className="welcome-section">
@@ -132,79 +224,44 @@ function CustomerDashboard() {
         <div className="dashboard-content">
           <div className="card">
 
-            {/* DASHBOARD */}
-            {activePage === "dashboard" && (
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Service</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>#SR001</td>
-                      <td>Plumbing</td>
-                      <td>Feb 15, 2026</td>
-                      <td>
-                        <span className="badge badge-completed">
-                          Completed
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-sm btn-view"
-                          onClick={() =>
-                            setOpenTrackId(
-                              openTrackId === "SR001" ? null : "SR001"
-                            )
-                          }
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-
-                    {openTrackId === "SR001" && (
-                      <tr>
-                        <td colSpan="5">
-                          <div className="track-dropdown">
-                            <div className="track-step completed">✔ Request Placed</div>
-                            <div className="track-step completed">✔ Technician Assigned</div>
-                            <div className="track-step completed">✔ Work In Progress</div>
-                            <div className="track-step completed">✔ Service Completed</div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* CREATE REQUEST */}
             {activePage === "create" && (
               <div className="request-form">
                 <h3>Create Service Request</h3>
 
                 <div className="form-group">
                   <label>Technician Type Required</label>
-                  <select className="form-control">
-                    <option>Select Technician</option>
-                    <option>Plumber</option>
-                    <option>Electrician</option>
-                    <option>AC Repair</option>
-                    <option>Carpenter</option>
+                  <select
+                    className="form-control"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                  >
+                    <option value="">Select Technician</option>
+                    {categories.map((cat) => (
+                      <option key={cat.categoryId} value={cat.categoryId}>
+                        {cat.categoryName}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label>Upload Damage / Repair Photo</label>
-                  <input type="file" className="form-control" />
+                  <label>Problem Description</label>
+                  <textarea
+                    className="form-control"
+                    value={problemDescription}
+                    onChange={(e) => setProblemDescription(e.target.value)}
+                  ></textarea>
+                </div>
+
+                {/* ✅ FILE INPUT ADDED */}
+                <div className="form-group">
+                  <label>Upload Damage Photo</label>
+                  <input
+                    type="file"
+                    className="form-control"
+                    accept="image/*"
+                    onChange={(e) => setDamagePhoto(e.target.files[0])}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -227,76 +284,12 @@ function CustomerDashboard() {
                   </div>
                 </div>
 
-                <button className="btn btn-success">Submit</button>
-              </div>
-            )}
-
-            {/* REVIEWS */}
-            {activePage === "reviews" && (
-              <div className="reviews-section">
-                {!selectedService ? (
-                  <>
-                    <h3>Completed Services</h3>
-
-                    <div className="review-service-card">
-                      <h4>Plumbing Service</h4>
-                      <p>Technician: Rahul Sharma</p>
-
-                      <button
-                        className="btn btn-success"
-                        onClick={() => setSelectedService("Plumbing Service")}
-                      >
-                        Give Review
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="give-review-card">
-                    <h3>Review for {selectedService}</h3>
-
-                    <div className="star-rating">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <i
-                          key={star}
-                          className={`fas fa-star ${
-                            star <= (hover || rating) ? "active-star" : ""
-                          }`}
-                          onClick={() => setRating(star)}
-                          onMouseEnter={() => setHover(star)}
-                          onMouseLeave={() => setHover(0)}
-                        ></i>
-                      ))}
-                    </div>
-
-                    <textarea
-                      className="review-textarea"
-                      placeholder="Write your experience..."
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                    ></textarea>
-
-                    <div className="review-buttons">
-                      <button
-                        className="btn btn-success"
-                        onClick={() => {
-                          alert("Review Submitted Successfully!");
-                          setSelectedService(null);
-                          setRating(0);
-                          setReviewText("");
-                        }}
-                      >
-                        Submit Review
-                      </button>
-
-                      <button
-                        className="btn btn-cancel"
-                        onClick={() => setSelectedService(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <button
+                  className="btn btn-success"
+                  onClick={handleSubmitRequest}
+                >
+                  Submit
+                </button>
               </div>
             )}
 
