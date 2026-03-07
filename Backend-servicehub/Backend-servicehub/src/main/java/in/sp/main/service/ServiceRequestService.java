@@ -13,6 +13,7 @@ import in.sp.main.repository.UserRepository;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,6 +28,7 @@ public class ServiceRequestService {
     @Autowired
     private ServiceCategoryRepository categoryRepo;
 
+    // ✅ CREATE REQUEST
     public ServiceRequest createRequest(
             String email,
             Long categoryId,
@@ -36,47 +38,35 @@ public class ServiceRequestService {
             Double longitude,
             MultipartFile damagePhoto) {
 
-        // ✅ 1. Get logged-in customer
         User customer = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ✅ 2. Get service category
         ServiceCategory category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        // ✅ 3. Save image file
         String fileName = null;
 
         if (damagePhoto != null && !damagePhoto.isEmpty()) {
 
-            // Absolute path to project folder
-            String uploadDir = System.getProperty("user.dir") 
+            String uploadDir = System.getProperty("user.dir")
                     + File.separator + "uploads";
 
-            // Create uploads folder if not exists
             File folder = new File(uploadDir);
             if (!folder.exists()) {
-                folder.mkdirs();   // IMPORTANT
+                folder.mkdirs();
             }
 
-            // Generate unique filename
-            fileName = UUID.randomUUID() + "_" 
-                    + damagePhoto.getOriginalFilename();
+            fileName = UUID.randomUUID() + "_" + damagePhoto.getOriginalFilename();
 
-            // Full file path
-            File file = new File(uploadDir 
-                    + File.separator + fileName);
+            File file = new File(uploadDir + File.separator + fileName);
 
             try {
                 damagePhoto.transferTo(file);
             } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(
-                        "File upload failed: " + e.getMessage());
+                throw new RuntimeException("File upload failed: " + e.getMessage());
             }
         }
 
-        // ✅ 4. Create service request object
         ServiceRequest request = new ServiceRequest();
         request.setCustomer(customer);
         request.setCategory(category);
@@ -84,10 +74,32 @@ public class ServiceRequestService {
         request.setLocationAddress(locationAddress);
         request.setLatitude(latitude);
         request.setLongitude(longitude);
-        request.setDamagePhotoUrl(fileName); // save filename
+        request.setDamagePhotoUrl(fileName);
         request.setStatus("PENDING");
 
-        // ✅ 5. Save to database
         return requestRepo.save(request);
+    }
+
+    // ✅ GET CUSTOMER REQUESTS
+    public List<ServiceRequest> getRequestsByCustomer(String email) {
+
+        User customer = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return requestRepo.findByCustomer(customer);
+    }
+
+    // ✅ DELETE REQUEST
+    public void deleteRequest(Long requestId, String email) {
+
+        ServiceRequest request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        // Ensure the request belongs to the logged-in customer
+        if (!request.getCustomer().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized delete attempt");
+        }
+
+        requestRepo.delete(request);
     }
 }

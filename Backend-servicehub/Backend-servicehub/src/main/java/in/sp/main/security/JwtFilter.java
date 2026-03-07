@@ -1,14 +1,19 @@
 package in.sp.main.security;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -27,12 +32,26 @@ public class JwtFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
 
             String token = header.substring(7);
-            String email = jwtUtil.extractEmail(token);
 
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(email, null, null);
+            try {
 
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                String email = jwtUtil.extractEmail(token);
+
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    email,
+                                    null,
+                                    new ArrayList<>()
+                            );
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+
+            } catch (Exception e) {
+                System.out.println("Invalid JWT Token: " + e.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);

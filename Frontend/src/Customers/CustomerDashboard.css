@@ -376,3 +376,25 @@ tbody tr:hover {
         transform: translateX(0);
     }
 }
+.requests-section {
+  margin-bottom: 25px;
+}
+
+.request-card {
+  display: flex;
+  gap: 20px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  background: #fff;
+}
+
+.request-image img {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.request-details h4 {
+  margin: 0;
+}

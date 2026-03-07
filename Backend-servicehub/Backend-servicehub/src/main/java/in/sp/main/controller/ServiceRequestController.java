@@ -1,5 +1,7 @@
 package in.sp.main.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -17,6 +19,7 @@ public class ServiceRequestController {
     @Autowired
     private ServiceRequestService service;
 
+    // ✅ CREATE SERVICE REQUEST
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceRequest createRequest(
             @RequestParam("categoryId") Long categoryId,
@@ -38,5 +41,25 @@ public class ServiceRequestController {
                 longitude,
                 damagePhoto
         );
+    }
+
+    // ✅ GET LOGGED-IN CUSTOMER REQUESTS
+    @GetMapping("/my")
+    public List<ServiceRequest> getMyRequests(Authentication authentication) {
+
+        String email = authentication.getName();
+
+        return service.getRequestsByCustomer(email);
+    }
+
+    // ✅ DELETE CUSTOMER REQUEST
+    @DeleteMapping("/{id}")
+    public String deleteRequest(@PathVariable Long id, Authentication authentication) {
+
+        String email = authentication.getName();
+
+        service.deleteRequest(id, email);
+
+        return "Request deleted successfully";
     }
 }

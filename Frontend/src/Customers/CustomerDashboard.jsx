@@ -22,7 +22,10 @@ function CustomerDashboard() {
   const [problemDescription, setProblemDescription] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
-  const [damagePhoto, setDamagePhoto] = useState(null); // ✅ NEW
+  const [damagePhoto, setDamagePhoto] = useState(null);
+
+  // ✅ SERVICE REQUESTS
+  const [requests, setRequests] = useState([]);
 
   // ===============================
   // 🔐 CHECK LOGIN
@@ -50,6 +53,71 @@ function CustomerDashboard() {
     }
   };
 
+  // ===============================
+  // 📄 FETCH REQUESTS
+  // ===============================
+
+  const fetchRequests = async (token) => {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/customer/requests/my",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data);
+      }
+
+    } catch (error) {
+      console.error("Request fetch error:", error);
+    }
+  };
+
+  // ===============================
+  // ❌ DELETE REQUEST (NEW)
+  // ===============================
+
+  const deleteRequest = async (id) => {
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this request?");
+
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem("token");
+
+    try {
+
+      const res = await fetch(
+        `http://localhost:8080/api/customer/requests/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+
+        alert("Request deleted successfully");
+
+        // refresh list
+        fetchRequests(token);
+
+      } else {
+        alert("Failed to delete request");
+      }
+
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -68,6 +136,7 @@ function CustomerDashboard() {
 
       setUserName(payload.sub);
       fetchProfile(token);
+      fetchRequests(token);
 
     } catch (error) {
       localStorage.removeItem("token");
@@ -105,7 +174,7 @@ function CustomerDashboard() {
   };
 
   // ===============================
-  // 📨 SUBMIT REQUEST (UPDATED)
+  // 📨 SUBMIT REQUEST
   // ===============================
 
   const handleSubmitRequest = async () => {
@@ -124,7 +193,7 @@ function CustomerDashboard() {
     formData.append("locationAddress", location);
     formData.append("latitude", latitude);
     formData.append("longitude", longitude);
-    formData.append("damagePhoto", damagePhoto); // ✅ FILE
+    formData.append("damagePhoto", damagePhoto);
 
     try {
       const response = await fetch(
@@ -148,6 +217,8 @@ function CustomerDashboard() {
         setLongitude("");
         setDamagePhoto(null);
         setActivePage("dashboard");
+
+        fetchRequests(token);
 
       } else {
         alert("Failed to submit request");
@@ -224,6 +295,66 @@ function CustomerDashboard() {
         <div className="dashboard-content">
           <div className="card">
 
+            {activePage === "dashboard" && (
+
+              <div className="requests-section">
+
+                <h3>Your Service Requests</h3>
+
+                {requests.length === 0 ? (
+                  <p>No service requests yet</p>
+                ) : (
+
+                  requests.map((req) => (
+
+                    <div key={req.requestId} className="request-card">
+
+                      <div className="request-image">
+                        {req.damagePhotoUrl && (
+                          <img
+                            src={`http://localhost:8080/uploads/${req.damagePhotoUrl}`}
+                            alt="damage"
+                            width="120"
+                          />
+                        )}
+                      </div>
+
+                      <div className="request-details">
+
+                        <h4>{req.category?.categoryName}</h4>
+
+                        <p>
+                          <strong>Problem:</strong> {req.problemDescription}
+                        </p>
+
+                        <p>
+                          <strong>Location:</strong> {req.locationAddress}
+                        </p>
+
+                        <p>
+                          <strong>Status:</strong> {req.status}
+                        </p>
+
+                        {/* ✅ DELETE BUTTON ADDED */}
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => deleteRequest(req.requestId)}
+                        >
+                          Delete
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  ))
+
+                )}
+
+              </div>
+
+            )}
+
             {activePage === "create" && (
               <div className="request-form">
                 <h3>Create Service Request</h3>
@@ -253,7 +384,6 @@ function CustomerDashboard() {
                   ></textarea>
                 </div>
 
-                {/* ✅ FILE INPUT ADDED */}
                 <div className="form-group">
                   <label>Upload Damage Photo</label>
                   <input
