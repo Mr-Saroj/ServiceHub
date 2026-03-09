@@ -4,6 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+
 import in.sp.main.entity.ServiceCategory;
 import in.sp.main.entity.ServiceRequest;
 import in.sp.main.entity.User;
@@ -11,10 +14,9 @@ import in.sp.main.repository.ServiceCategoryRepository;
 import in.sp.main.repository.ServiceRequestRepository;
 import in.sp.main.repository.UserRepository;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class ServiceRequestService {
@@ -27,6 +29,9 @@ public class ServiceRequestService {
 
     @Autowired
     private ServiceCategoryRepository categoryRepo;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     // ✅ CREATE REQUEST
     public ServiceRequest createRequest(
@@ -44,37 +49,34 @@ public class ServiceRequestService {
         ServiceCategory category = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        String fileName = null;
+        String imageUrl = null;
 
+        // Upload image to Cloudinary
         if (damagePhoto != null && !damagePhoto.isEmpty()) {
 
-            String uploadDir = System.getProperty("user.dir")
-                    + File.separator + "uploads";
-
-            File folder = new File(uploadDir);
-            if (!folder.exists()) {
-                folder.mkdirs();
-            }
-
-            fileName = UUID.randomUUID() + "_" + damagePhoto.getOriginalFilename();
-
-            File file = new File(uploadDir + File.separator + fileName);
-
             try {
-                damagePhoto.transferTo(file);
+
+                Map uploadResult = cloudinary.uploader().upload(
+                        damagePhoto.getBytes(),
+                        ObjectUtils.asMap("folder", "servicehub")
+                );
+
+                imageUrl = uploadResult.get("secure_url").toString();
+
             } catch (IOException e) {
-                throw new RuntimeException("File upload failed: " + e.getMessage());
+                throw new RuntimeException("Image upload failed: " + e.getMessage());
             }
         }
 
         ServiceRequest request = new ServiceRequest();
+
         request.setCustomer(customer);
         request.setCategory(category);
         request.setProblemDescription(problemDescription);
         request.setLocationAddress(locationAddress);
         request.setLatitude(latitude);
         request.setLongitude(longitude);
-        request.setDamagePhotoUrl(fileName);
+        request.setDamagePhotoUrl(imageUrl);  // store Cloudinary URL
         request.setStatus("PENDING");
 
         return requestRepo.save(request);

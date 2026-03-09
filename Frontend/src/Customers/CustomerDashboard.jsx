@@ -16,7 +16,6 @@ function CustomerDashboard() {
   const [selectedService, setSelectedService] = useState(null);
   const [userName, setUserName] = useState("");
 
-  // ✅ STATES
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState("");
   const [problemDescription, setProblemDescription] = useState("");
@@ -24,12 +23,7 @@ function CustomerDashboard() {
   const [longitude, setLongitude] = useState("");
   const [damagePhoto, setDamagePhoto] = useState(null);
 
-  // ✅ SERVICE REQUESTS
   const [requests, setRequests] = useState([]);
-
-  // ===============================
-  // 🔐 CHECK LOGIN
-  // ===============================
 
   const fetchProfile = async (token) => {
     try {
@@ -53,10 +47,6 @@ function CustomerDashboard() {
     }
   };
 
-  // ===============================
-  // 📄 FETCH REQUESTS
-  // ===============================
-
   const fetchRequests = async (token) => {
     try {
       const res = await fetch(
@@ -78,14 +68,9 @@ function CustomerDashboard() {
     }
   };
 
-  // ===============================
-  // ❌ DELETE REQUEST (NEW)
-  // ===============================
-
   const deleteRequest = async (id) => {
 
     const confirmDelete = window.confirm("Are you sure you want to delete this request?");
-
     if (!confirmDelete) return;
 
     const token = localStorage.getItem("token");
@@ -105,8 +90,6 @@ function CustomerDashboard() {
       if (res.ok) {
 
         alert("Request deleted successfully");
-
-        // refresh list
         fetchRequests(token);
 
       } else {
@@ -144,20 +127,12 @@ function CustomerDashboard() {
     }
   }, [navigate]);
 
-  // ===============================
-  // 📦 FETCH CATEGORIES
-  // ===============================
-
   useEffect(() => {
     fetch("http://localhost:8080/api/categories")
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error("Category fetch error:", err));
   }, []);
-
-  // ===============================
-  // 📍 LOCATION
-  // ===============================
 
   const handleLocation = () => {
     if (navigator.geolocation) {
@@ -172,10 +147,6 @@ function CustomerDashboard() {
       });
     }
   };
-
-  // ===============================
-  // 📨 SUBMIT REQUEST
-  // ===============================
 
   const handleSubmitRequest = async () => {
 
@@ -228,7 +199,6 @@ function CustomerDashboard() {
     }
   };
 
-  // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
@@ -312,7 +282,7 @@ function CustomerDashboard() {
                       <div className="request-image">
                         {req.damagePhotoUrl && (
                           <img
-                            src={`http://localhost:8080/uploads/${req.damagePhotoUrl}`}
+                            src={req.damagePhotoUrl}
                             alt="damage"
                             width="120"
                           />
@@ -335,7 +305,6 @@ function CustomerDashboard() {
                           <strong>Status:</strong> {req.status}
                         </p>
 
-                        {/* ✅ DELETE BUTTON ADDED */}
                         <button
                           className="btn btn-danger"
                           onClick={() => deleteRequest(req.requestId)}
