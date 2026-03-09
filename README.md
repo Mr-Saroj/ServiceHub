@@ -13,6 +13,8 @@ Backend: Spring Boot (REST API)
 
 Database: MySQL
 
+Cloud:-Cloudnary
+
 Authentication: Role-based login (Customer / Technician)
 
 🎯 Key Features
@@ -108,4 +110,5 @@ Implement real-world database relationships
 Understand role-based authentication
 
 Build a scalable service marketplace system
+
 
