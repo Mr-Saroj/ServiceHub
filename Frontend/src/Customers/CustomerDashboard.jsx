@@ -135,18 +135,43 @@ function CustomerDashboard() {
   }, []);
 
   const handleLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
 
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
+  if (navigator.geolocation) {
 
-        setLocation(
-          `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`
+    navigator.geolocation.getCurrentPosition(async (position) => {
+
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      setLatitude(lat);
+      setLongitude(lng);
+
+      try {
+
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
         );
-      });
-    }
-  };
+
+        const data = await res.json();
+
+        if (data.display_name) {
+          setLocation(data.display_name);   // Proper address
+        } else {
+          setLocation(`Lat: ${lat}, Lng: ${lng}`);
+        }
+
+      } catch (error) {
+        console.error("Location fetch error:", error);
+        setLocation(`Lat: ${lat}, Lng: ${lng}`);
+      }
+
+    });
+
+  } else {
+    alert("Geolocation not supported");
+  }
+
+};
 
   const handleSubmitRequest = async () => {
 
