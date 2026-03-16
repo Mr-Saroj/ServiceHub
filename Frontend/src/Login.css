@@ -192,3 +192,29 @@
 .register-link a:hover {
     text-decoration: underline;
 }
+/* SweetAlert Custom Styling */
+
+.swal-popup{
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+
+.swal-title{
+    font-size:22px;
+    font-weight:600;
+}
+
+.swal-confirm-btn{
+    background-color:#4A90E2;
+    color:white;
+    padding:10px 25px;
+    border:none;
+    border-radius:6px;
+    font-weight:500;
+    cursor:pointer;
+}
+
+.swal-confirm-btn:hover{
+    background-color:#3a7bc8;
+}

@@ -28,7 +28,6 @@ function TechnicianDashboard() {
         return;
       }
 
-      // Temporary fallback → show email until DB loads
       setTechnicianName(payload.sub);
 
       fetchProfile(token);
@@ -42,7 +41,7 @@ function TechnicianDashboard() {
     }
   }, [navigate]);
 
-  /* ================= FETCH PROFILE FROM DATABASE ================= */
+  /* ================= FETCH PROFILE ================= */
   const fetchProfile = async (token) => {
     try {
       const res = await fetch(
@@ -56,8 +55,6 @@ function TechnicianDashboard() {
 
       if (res.ok) {
         const data = await res.json();
-
-        // 🔥 FIX HERE → use data.name NOT data.fullName
         if (data.name) {
           setTechnicianName(data.name);
         }
@@ -71,7 +68,7 @@ function TechnicianDashboard() {
   const fetchAvailableRequests = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/technician/available",
+        "http://localhost:8080/api/technician/requests",
         {
           headers: {
             Authorization: "Bearer " + token,
@@ -92,7 +89,7 @@ function TechnicianDashboard() {
   const fetchMyJobs = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/technician/myjobs",
+        "http://localhost:8080/api/technician/my-jobs",
         {
           headers: {
             Authorization: "Bearer " + token,
@@ -126,39 +123,49 @@ function TechnicianDashboard() {
         setReviews(data);
       }
     } catch (error) {
-        console.error(error);
-    }
-  };
-
-  /* ================= ACCEPT JOB ================= */
-  const acceptJob = async (jobId) => {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch(
-        `http://localhost:8080/api/technician/accept/${jobId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
-
-      if (res.ok) {
-        fetchAvailableRequests(token);
-        fetchMyJobs(token);
-      }
-    } catch (error) {
       console.error(error);
     }
   };
 
-  /* ================= COMPLETE JOB ================= */
-  const completeJob = async (jobId) => {
+  /* ================= ACCEPT JOB ================= */
+  const acceptJob = async (requestId) => {
+
     const token = localStorage.getItem("token");
 
     try {
+
+      const res = await fetch(
+        `http://localhost:8080/api/technician/accept/${requestId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: "Bearer " + token
+          }
+        }
+      );
+
+      if (res.ok) {
+
+        alert("Job Accepted");
+
+        fetchAvailableRequests(token);
+        fetchMyJobs(token);
+
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+
+  };
+
+  /* ================= COMPLETE JOB ================= */
+  const completeJob = async (jobId) => {
+
+    const token = localStorage.getItem("token");
+
+    try {
+
       const res = await fetch(
         `http://localhost:8080/api/technician/complete/${jobId}`,
         {
@@ -172,18 +179,20 @@ function TechnicianDashboard() {
       if (res.ok) {
         fetchMyJobs(token);
       }
+
     } catch (error) {
       console.error(error);
     }
+
   };
 
   /* ================= CALCULATIONS ================= */
   const totalCompletedJobs = myJobs.filter(
-    (job) => job.status === "Completed"
+    (job) => job.request?.status === "COMPLETED"
   );
 
   const totalEarnings = totalCompletedJobs.reduce(
-    (acc, job) => acc + job.price,
+    (acc) => acc + 50,
     0
   );
 
@@ -203,6 +212,7 @@ function TechnicianDashboard() {
 
         <div className="sidebar-menu">
           <ul>
+
             <li
               className={activePage === "dashboard" ? "active" : ""}
               onClick={() => setActivePage("dashboard")}
@@ -237,11 +247,13 @@ function TechnicianDashboard() {
             >
               <i className="fas fa-star"></i> Reviews
             </li>
+
           </ul>
         </div>
       </aside>
 
       <main className="main-content">
+
         {activePage === "dashboard" && (
           <>
             <div className="header">
@@ -250,6 +262,7 @@ function TechnicianDashboard() {
             </div>
 
             <div className="dashboard-content">
+
               <div className="card">
                 <div className="card-header">
                   <h2>Profile</h2>
@@ -274,105 +287,133 @@ function TechnicianDashboard() {
                 </div>
 
                 <div className="earnings-summary">
+
                   <div className="earning-item">
                     <h3>Total Earnings</h3>
                     <p>${totalEarnings}</p>
                   </div>
+
                   <div className="earning-item">
                     <h3>Total Jobs</h3>
                     <p>{myJobs.length}</p>
                   </div>
+
                   <div className="earning-item">
                     <h3>Completion Rate</h3>
                     <p>{completionRate}%</p>
                   </div>
+
                 </div>
               </div>
+
             </div>
           </>
         )}
 
         {activePage === "available" && (
           <div className="available-wrapper">
+
             <div className="available-header">
               <h2>Available Service Requests</h2>
             </div>
 
             <div className="request-grid">
+
               {availableRequests.length === 0 ? (
                 <p>No available requests.</p>
               ) : (
+
                 availableRequests.map((request) => (
-                  <div key={request.id} className="request-card-modern">
-                    <h3>{request.service}</h3>
-                    <p>Customer: {request.customer}</p>
-                    <p>Location: {request.location}</p>
-                    <p>Date: {request.date}</p>
-                    <p>Price: ${request.price}</p>
+
+                  <div key={request.requestId} className="request-card-modern">
+
+                    <h3>{request.category?.categoryName}</h3>
+
+                    <p><b>Customer:</b> {request.customer?.name}</p>
+
+                    <p><b>Problem:</b> {request.problemDescription}</p>
+
+                    <p><b>Location:</b> {request.locationAddress}</p>
+
+                    {request.damagePhotoUrl && (
+                      <div className="damage-image-container">
+                        <img
+                          src={request.damagePhotoUrl}
+                          alt="Damage"
+                          className="damage-image"
+                        />
+                      </div>
+                    )}
 
                     <button
                       className="btn-accept"
-                      onClick={() => acceptJob(request.id)}
+                      onClick={() => acceptJob(request.requestId)}
                     >
-                      Accept
+                      Accept Job
                     </button>
+
                   </div>
+
                 ))
               )}
+
             </div>
           </div>
         )}
 
         {activePage === "myjobs" && (
           <div className="available-wrapper">
+
             <div className="available-header">
               <h2>My Jobs</h2>
             </div>
 
             <div className="request-grid">
+
               {myJobs.length === 0 ? (
                 <p>No jobs yet.</p>
               ) : (
-                myJobs.map((job) => (
-                  <div key={job.id} className="request-card-modern">
-                    <h3>{job.service}</h3>
-                    <p>Status: {job.status}</p>
-                    <p>Price: ${job.price}</p>
 
-                    {job.status === "In Progress" && (
+                myJobs.map((job) => (
+
+                  <div key={job.jobId} className="request-card-modern">
+
+                    <h3>{job.request?.category?.categoryName}</h3>
+
+                    <p><b>Problem:</b> {job.request?.problemDescription}</p>
+
+                    <p><b>Status:</b> {job.request?.status}</p>
+
+                    <p><b>Location:</b> {job.request?.locationAddress}</p>
+
+                    {job.request?.damagePhotoUrl && (
+                      <div className="damage-image-container">
+                        <img
+                          src={job.request.damagePhotoUrl}
+                          alt="Damage"
+                          className="damage-image"
+                        />
+                      </div>
+                    )}
+
+                    {job.request?.status === "ACCEPTED" && (
                       <button
                         className="btn-accept"
-                        onClick={() => completeJob(job.id)}
+                        onClick={() => completeJob(job.jobId)}
                       >
                         Mark Completed
                       </button>
                     )}
+
                   </div>
+
                 ))
               )}
+
             </div>
           </div>
         )}
 
-        {activePage === "earnings" && (
-          <div className="available-wrapper">
-            <h2>Total Earnings: ${totalEarnings}</h2>
-          </div>
-        )}
-
-        {activePage === "reviews" && (
-          <div className="available-wrapper">
-            <div className="request-grid">
-              {reviews.map((review) => (
-                <div key={review.id} className="request-card-modern">
-                  <h3>{review.customer}</h3>
-                  <p>⭐ {review.rating}</p>
-                  <p>{review.comment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );

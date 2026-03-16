@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 function Login() {
 
@@ -18,6 +19,19 @@ function Login() {
         });
     };
 
+    // ✅ Custom Styled Alert
+    const CustomAlert = Swal.mixin({
+        background: "#ffffff",
+        color: "#333",
+        confirmButtonColor: "#4A90E2",
+        customClass: {
+            popup: "swal-popup",
+            title: "swal-title",
+            confirmButton: "swal-confirm-btn"
+        },
+        buttonsStyling: false
+    });
+
    const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -32,20 +46,32 @@ function Login() {
 
         if (!response.ok) {
             const errorText = await response.text();
-            alert(errorText);
+
+            CustomAlert.fire({
+                icon: "error",
+                title: "Login Failed",
+                text: errorText
+            });
+
             return;
         }
 
         let token = await response.text();
 
-        // ✅ Remove Bearer if backend sends it
+        // Remove Bearer if backend sends it
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
 
         localStorage.setItem("token", token);
 
-        alert("Login Successful!");
+        CustomAlert.fire({
+            icon: "success",
+            title: "Login Successful!",
+            text: "Welcome back to ServiceHub",
+            timer: 1500,
+            showConfirmButton: false
+        });
 
         const payload = JSON.parse(atob(token.split(".")[1]));
 
@@ -57,9 +83,15 @@ function Login() {
 
     } catch (error) {
         console.error("Error:", error);
-        alert("Server Error!");
+
+        CustomAlert.fire({
+            icon: "error",
+            title: "Server Error",
+            text: "Something went wrong. Please try again."
+        });
     }
 };
+
     return (
         <main className="login-main">
             <div className="login-container">

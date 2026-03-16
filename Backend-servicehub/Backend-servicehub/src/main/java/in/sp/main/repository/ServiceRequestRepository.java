@@ -13,4 +13,5 @@ public interface ServiceRequestRepository
 
     List<ServiceRequest> findByCustomer_UserId(Long userId);
     List<ServiceRequest> findByCustomer(User customer);
+    List<ServiceRequest> findByStatus(String status);
 }

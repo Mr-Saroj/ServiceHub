@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./Register.css";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 function Register() {
   const navigate = useNavigate();
@@ -12,6 +13,19 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
+  });
+
+  // Same styled alert used in Login page
+  const CustomAlert = Swal.mixin({
+    background: "#ffffff",
+    color: "#333",
+    confirmButtonColor: "#4A90E2",
+    customClass: {
+      popup: "swal-popup",
+      title: "swal-title",
+      confirmButton: "swal-confirm-btn"
+    },
+    buttonsStyling: false
   });
 
   const handleChange = (e) => {
@@ -27,12 +41,20 @@ function Register() {
     e.preventDefault();
 
     if (!formData.name || !formData.email || !formData.password) {
-      alert("Please fill all fields!");
+      CustomAlert.fire({
+        icon: "warning",
+        title: "Missing Fields",
+        text: "Please fill all fields!"
+      });
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      CustomAlert.fire({
+        icon: "error",
+        title: "Password Mismatch",
+        text: "Passwords do not match!"
+      });
       return;
     }
 
@@ -58,7 +80,14 @@ function Register() {
       const message = await response.text();
 
       if (response.ok) {
-        alert("Account Created Successfully!");
+
+        CustomAlert.fire({
+          icon: "success",
+          title: "Account Created!",
+          text: "Your ServiceHub account was created successfully.",
+          timer: 1800,
+          showConfirmButton: false
+        });
 
         setFormData({
           name: "",
@@ -67,13 +96,28 @@ function Register() {
           confirmPassword: "",
         });
 
-        navigate("/login");
+        setTimeout(() => {
+          navigate("/login");
+        }, 1800);
+
       } else {
-        alert(message || "Registration failed!");
+
+        CustomAlert.fire({
+          icon: "error",
+          title: "Registration Failed",
+          text: message || "Registration failed!"
+        });
+
       }
+
     } catch (error) {
       console.error("Error:", error);
-      alert("Server Error! Please try again.");
+
+      CustomAlert.fire({
+        icon: "error",
+        title: "Server Error",
+        text: "Server error! Please try again later."
+      });
     }
   };
 
@@ -154,15 +198,13 @@ function Register() {
             </div>
           </div>
 
-          {/* Role Selection (Highlight Fixed) */}
+          {/* Role Selection */}
           <div className="form-group">
             <label>I am a:</label>
             <div className="role-selection">
 
               <div
-                className={`role-option ${
-                  role === "CUSTOMER" ? "active" : ""
-                }`}
+                className={`role-option ${role === "CUSTOMER" ? "active" : ""}`}
                 onClick={() => setRole("CUSTOMER")}
               >
                 <input
@@ -179,9 +221,7 @@ function Register() {
               </div>
 
               <div
-                className={`role-option ${
-                  role === "TECHNICIAN" ? "active" : ""
-                }`}
+                className={`role-option ${role === "TECHNICIAN" ? "active" : ""}`}
                 onClick={() => setRole("TECHNICIAN")}
               >
                 <input

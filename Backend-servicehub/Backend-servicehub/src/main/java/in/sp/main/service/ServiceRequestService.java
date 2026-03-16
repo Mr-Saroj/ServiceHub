@@ -9,9 +9,11 @@ import com.cloudinary.utils.ObjectUtils;
 
 import in.sp.main.entity.ServiceCategory;
 import in.sp.main.entity.ServiceRequest;
+import in.sp.main.entity.TechnicianJob;
 import in.sp.main.entity.User;
 import in.sp.main.repository.ServiceCategoryRepository;
 import in.sp.main.repository.ServiceRequestRepository;
+import in.sp.main.repository.TechnicianJobRepository;
 import in.sp.main.repository.UserRepository;
 
 import java.io.IOException;
@@ -32,6 +34,8 @@ public class ServiceRequestService {
 
     @Autowired
     private Cloudinary cloudinary;
+    @Autowired
+    private TechnicianJobRepository technicianJobRepository;
 
     // ✅ CREATE REQUEST
     public ServiceRequest createRequest(
@@ -104,4 +108,54 @@ public class ServiceRequestService {
 
         requestRepo.delete(request);
     }
+ // ✅ GET ALL PENDING REQUESTS FOR TECHNICIAN
+    public List<ServiceRequest> getAllPendingRequests() {
+
+        return requestRepo.findByStatus("PENDING");
+
+    }
+    public ServiceRequest acceptJob(Long requestId, String technicianEmail) {
+
+        ServiceRequest request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        User technician = userRepo.findByEmail(technicianEmail)
+                .orElseThrow(() -> new RuntimeException("Technician not found"));
+
+        // Update service_request table
+        request.setStatus("ACCEPTED");
+        request.setTechnician(technician);
+
+        ServiceRequest savedRequest = requestRepo.save(request);
+
+        // ===== NEW CODE: STORE IN technician_jobs TABLE =====
+
+        TechnicianJob job = new TechnicianJob();
+        job.setTechnician(technician);
+        job.setRequest(savedRequest);
+
+        technicianJobRepository.save(job);
+
+        // ===============================================
+
+        return savedRequest;
+    }
+
+    public List<TechnicianJob> getTechnicianJobs(String email) {
+
+        return technicianJobRepository.findByTechnician_Email(email);
+
+    }
+    public ServiceRequest completeJob(Long jobId) {
+
+        TechnicianJob job = technicianJobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        ServiceRequest request = job.getRequest();
+
+        request.setStatus("COMPLETED");
+
+        return requestRepo.save(request);
+    }
+    
 }

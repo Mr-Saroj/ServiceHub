@@ -11,9 +11,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -28,30 +29,36 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
+        System.out.println("Authorization header: " + header); // Debug: see if header is received
 
         if (header != null && header.startsWith("Bearer ")) {
-
             String token = header.substring(7);
 
             try {
-
                 String email = jwtUtil.extractEmail(token);
+                String role = jwtUtil.extractRole(token);
+
+                // Normalize role: trim, uppercase, remove ROLE_ if present
+                role = role.trim().toUpperCase().replace("ROLE_", "");
+
+                System.out.println("JWT email: " + email + ", role: " + role);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    email,
-                                    null,
-                                    new ArrayList<>()
-                            );
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(email, null, List.of(authority));
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+
+                    System.out.println("Authorities set: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
                 }
 
             } catch (Exception e) {
                 System.out.println("Invalid JWT Token: " + e.getMessage());
             }
+        } else {
+            System.out.println("No Bearer token found in header.");
         }
 
         filterChain.doFilter(request, response);
