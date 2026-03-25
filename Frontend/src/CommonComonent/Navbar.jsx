@@ -16,28 +16,20 @@ function Navbar() {
 
   // Hide loader after page change
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
+    setTimeout(() => setLoading(false), 500);
   }, [location]);
 
   // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 50);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <div>
-
       {loading && (
         <div className="page-loader">
           <div className="loader"></div>
@@ -46,10 +38,8 @@ function Navbar() {
 
       <header className={`navbar ${scrolled ? "navbar-scrolled" : ""}`}>
         <div className="navbar-container">
-
           <NavLink to="/" className="navbar-logo" onClick={handleLinkClick}>
-            <i className="fas fa-tools"></i>
-            ServiceHub
+            <i className="fas fa-tools"></i> ServiceHub
           </NavLink>
 
           <button
@@ -64,43 +54,51 @@ function Navbar() {
           <nav className={`navbar-menu ${menuOpen ? "open" : ""}`}>
             <ul>
               <li>
-                <NavLink to="/" onClick={handleLinkClick}
+                <NavLink
+                  to="/"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active" : "nav-link"
-                  }>
+                  }
+                >
                   Home
                 </NavLink>
               </li>
-
               <li>
-                <NavLink to="/service" onClick={handleLinkClick}
+                <NavLink
+                  to="/service"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active" : "nav-link"
-                  }>
+                  }
+                >
                   Services
                 </NavLink>
               </li>
-
               <li>
-                <NavLink to="/login" onClick={handleLinkClick}
+                <NavLink
+                  to="/login"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active" : "nav-link"
-                  }>
+                  }
+                >
                   Login
                 </NavLink>
               </li>
-
               <li>
-                <NavLink to="/register" onClick={handleLinkClick}
+                <NavLink
+                  to="/register"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-btn active" : "nav-btn"
-                  }>
+                  }
+                >
                   Register
                 </NavLink>
               </li>
             </ul>
           </nav>
-
         </div>
       </header>
 

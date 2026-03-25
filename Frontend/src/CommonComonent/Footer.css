@@ -1,9 +1,23 @@
+:root {
+  --primary-color: #4a90e2;
+  --light-text: #ffffff;
+}
+
+/* ================= FOOTER ================= */
 .sh-footer {
   background-color: #2C3E50;
   color: var(--light-text);
   padding: 50px 0 20px;
 }
 
+/* Container spacing */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* ================= GRID ================= */
 .footer-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -11,30 +25,111 @@
   margin-bottom: 30px;
 }
 
+/* ================= SECTIONS ================= */
 .footer-section h3 {
   margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.footer-section p {
+  color: #BDC3C7;
+  line-height: 1.6;
 }
 
 .footer-section ul {
   list-style: none;
+  padding: 0;
 }
 
 .footer-section ul li {
   margin-bottom: 10px;
+  font-size: 15px;
 }
 
+.footer-section ul li i {
+  margin-right: 8px;
+}
+
+/* Links */
 .footer-section ul li a {
   color: #BDC3C7;
   text-decoration: none;
+  transition: 0.3s;
 }
 
 .footer-section ul li a:hover {
   color: var(--primary-color);
 }
 
+/* ================= BOTTOM ================= */
 .footer-bottom {
   text-align: center;
   padding-top: 20px;
   border-top: 1px solid #34495E;
   color: #BDC3C7;
+  font-size: 14px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* Tablets (iPad) */
+@media (max-width: 1024px) {
+  .footer-content {
+    gap: 30px;
+  }
+
+  .footer-section h3 {
+    font-size: 18px;
+  }
+}
+
+/* Small tablets & large phones */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+  }
+
+  .footer-section {
+    text-align: left;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 480px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .footer-section {
+    text-align: center;
+  }
+
+  .footer-section ul li {
+    font-size: 14px;
+  }
+
+  .footer-section h3 {
+    font-size: 17px;
+  }
+
+  .footer-bottom {
+    font-size: 13px;
+  }
+}
+
+/* Extra small devices (iPhone SE etc.) */
+@media (max-width: 360px) {
+  .footer-section h3 {
+    font-size: 16px;
+  }
+
+  .footer-section ul li {
+    font-size: 13px;
+  }
+
+  .footer-bottom {
+    font-size: 12px;
+  }
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./Register.css";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -8,6 +8,9 @@ function Register() {
 
   const [role, setRole] = useState("CUSTOMER");
 
+  const [categories, setCategories] = useState([]); // ✅ NEW
+  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ NEW
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,7 +18,14 @@ function Register() {
     confirmPassword: "",
   });
 
-  // Same styled alert used in Login page
+  // ✅ FETCH CATEGORIES
+  useEffect(() => {
+    fetch("http://localhost:8080/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data))
+      .catch((err) => console.error("Error fetching categories:", err));
+  }, []);
+
   const CustomAlert = Swal.mixin({
     background: "#ffffff",
     color: "#333",
@@ -58,11 +68,22 @@ function Register() {
       return;
     }
 
+    // ✅ VALIDATE CATEGORY
+    if (role === "TECHNICIAN" && !selectedCategory) {
+      CustomAlert.fire({
+        icon: "warning",
+        title: "Select Category",
+        text: "Please select your service category!"
+      });
+      return;
+    }
+
     const requestData = {
       name: formData.name.trim(),
       email: formData.email.trim(),
       password: formData.password,
       role: role,
+      ...(role === "TECHNICIAN" && { categoryId: selectedCategory }) // ✅ SEND CATEGORY
     };
 
     try {
@@ -95,6 +116,8 @@ function Register() {
           password: "",
           confirmPassword: "",
         });
+
+        setSelectedCategory(""); // ✅ RESET
 
         setTimeout(() => {
           navigate("/login");
@@ -239,6 +262,29 @@ function Register() {
 
             </div>
           </div>
+
+          {/* ✅ CATEGORY DROPDOWN (ONLY FOR TECHNICIAN) */}
+          {role === "TECHNICIAN" && (
+            <div className="form-group">
+              <label>Select Category</label>
+              <div className="input-group">
+                <i className="fas fa-list"></i>
+                <select
+                  className="form-control"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  required
+                >
+                  <option value="">-- Select Category --</option>
+                  {categories.map((cat) => (
+                    <option key={cat.categoryId} value={cat.categoryId}>
+                      {cat.categoryName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Terms */}
           <div className="checkbox-group">

@@ -1,0 +1,177 @@
+/* Timeline Styles */
+.timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline-step {
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.timeline-step:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-step::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 40px;
+  height: calc(100% - 10px);
+  width: 3px;
+  background-color: #e9ecef;
+}
+
+.timeline-step:last-child::before {
+  display: none;
+}
+
+.timeline-icon {
+  position: absolute;
+  left: -10px;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.timeline-step.done .timeline-icon {
+  background-color: #0d6efd;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+
+.timeline-content {
+  padding-left: 20px;
+}
+
+.timeline-content h6 {
+  font-weight: 600;
+  color: #212529;
+}
+
+/* Enhanced Modal Styles */
+.modal-dialog-right {
+  position: fixed;
+  right: 0;
+  margin: 0;
+  height: 100%;
+  max-width: 500px;
+  transform: translateX(0);
+  transition: transform 0.3s ease-out;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Enhanced Timeline Styles */
+.tracking-timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.tracking-step {
+  position: relative;
+  padding-bottom: 30px;
+  padding-left: 20px;
+}
+
+.tracking-step::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 24px;
+  height: calc(100% + 10px);
+  width: 2px;
+  background: #e9ecef;
+}
+
+.tracking-step:last-child::before {
+  display: none;
+}
+
+.step-icon {
+  position: absolute;
+  left: -15px;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.tracking-step.completed .step-icon {
+  background: #28a745;
+  box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
+}
+
+.tracking-step.pending .step-icon {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+.step-content {
+  padding: 0 0 0 10px;
+}
+
+.step-content h6 {
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.tracking-step.completed h6 {
+  color: #28a745;
+}
+
+.tracking-step.pending h6 {
+  color: #6c757d;
+}
+
+/* Fix for sidebar disappearing */
+.sidebar {
+  z-index: 1045;
+}
+
+.modal-backdrop {
+  z-index: 1040;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 576px) {
+  .modal-dialog-right {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+
+.tracking-step.active .step-icon {
+  background: #0d6efd;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+
+.tracking-step.active h6 {
+  color: #0d6efd;
+}

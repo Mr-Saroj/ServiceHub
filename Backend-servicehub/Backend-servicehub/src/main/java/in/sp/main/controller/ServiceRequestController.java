@@ -27,6 +27,7 @@ public class ServiceRequestController {
             @RequestParam("locationAddress") String locationAddress,
             @RequestParam("latitude") Double latitude,
             @RequestParam("longitude") Double longitude,
+            @RequestParam("mobileNumber") String mobileNumber, // ✅ NEW FIELD
             @RequestParam("damagePhoto") MultipartFile damagePhoto,
             Authentication authentication) {
 
@@ -39,6 +40,7 @@ public class ServiceRequestController {
                 locationAddress,
                 latitude,
                 longitude,
+                mobileNumber, // ✅ pass to service
                 damagePhoto
         );
     }
@@ -62,5 +64,4 @@ public class ServiceRequestController {
 
         return "Request deleted successfully";
     }
-    
 }

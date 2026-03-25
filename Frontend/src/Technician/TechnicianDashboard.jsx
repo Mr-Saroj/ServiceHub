@@ -1,70 +1,51 @@
+// TechnicianDashboard.jsx
 import React, { useState, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./TechnicianDashboard.css";
-import { useNavigate } from "react-router-dom";
-
+import TechnicianHome from "./TechnicianHome";
+import AvailableRequests from "./AvailableRequests";
+import MyJobs from "./MyJobs";
 function TechnicianDashboard() {
-  const navigate = useNavigate();
-
   const [activePage, setActivePage] = useState("dashboard");
+  const [profileDropdown, setProfileDropdown] = useState(false);
   const [technicianName, setTechnicianName] = useState("");
   const [availableRequests, setAvailableRequests] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
-  const [reviews, setReviews] = useState([]);
 
-  /* ================= CHECK AUTH ================= */
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const handlePageClick = (page) => {
+    setActivePage(page);
 
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-
-      if (payload.role !== "TECHNICIAN") {
-        navigate("/login");
-        return;
-      }
-
-      setTechnicianName(payload.sub);
-
-      fetchProfile(token);
-      fetchAvailableRequests(token);
-      fetchMyJobs(token);
-      fetchReviews(token);
-
-    } catch (error) {
-      console.error("Invalid token");
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  /* ================= FETCH PROFILE ================= */
-  const fetchProfile = async (token) => {
-    try {
-      const res = await fetch(
-        "http://localhost:8080/api/technician/profile",
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.name) {
-          setTechnicianName(data.name);
-        }
-      }
-    } catch (error) {
-      console.error(error);
+    const offcanvasElement = document.getElementById("sidebarOffcanvas");
+    if (offcanvasElement && window.bootstrap) {
+      const offcanvas = window.bootstrap.Offcanvas.getInstance(offcanvasElement);
+      if (offcanvas) offcanvas.hide();
     }
   };
 
-  /* ================= FETCH AVAILABLE ================= */
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setTechnicianName(payload.sub);
+
+
+        fetchAvailableRequests(token);
+
+        fetchMyJobs(token);
+
+      } catch (error) {
+        console.error("Invalid token");
+      }
+    }
+  }, []);
+
+
+
+
+  //fetch all request of customer 
+
   const fetchAvailableRequests = async (token) => {
     try {
       const res = await fetch(
@@ -85,7 +66,8 @@ function TechnicianDashboard() {
     }
   };
 
-  /* ================= FETCH MY JOBS ================= */
+  //fetch only accepted job by technician
+
   const fetchMyJobs = async (token) => {
     try {
       const res = await fetch(
@@ -99,6 +81,7 @@ function TechnicianDashboard() {
 
       if (res.ok) {
         const data = await res.json();
+        console.log("MY JOBS:", data); // ✅ debug
         setMyJobs(data);
       }
     } catch (error) {
@@ -106,315 +89,342 @@ function TechnicianDashboard() {
     }
   };
 
-  /* ================= FETCH REVIEWS ================= */
-  const fetchReviews = async (token) => {
-    try {
-      const res = await fetch(
-        "http://localhost:8080/api/technician/reviews",
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
+  const openAcceptModal = (id, date, time) => {
+    acceptJob(id, date, time);
   };
 
-  /* ================= ACCEPT JOB ================= */
-  const acceptJob = async (requestId) => {
+  //accept job
+  const acceptJob = async (id, date, time) => {
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+  if (!id) {
+    alert("Request ID missing ❌");
+    return;
+  }
 
-    try {
+  if (!date || !time) {
+    alert("Please select date & time");
+    return;
+  }
 
-      const res = await fetch(
-        `http://localhost:8080/api/technician/accept/${requestId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: "Bearer " + token
-          }
-        }
-      );
-
-      if (res.ok) {
-
-        alert("Job Accepted");
-
-        fetchAvailableRequests(token);
-        fetchMyJobs(token);
-
+  try {
+    const res = await fetch(
+      `http://localhost:8080/api/technician/accept/${id}?date=${date}&time=${time}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
       }
+    );
 
-    } catch (error) {
-      console.error(error);
+    if (res.ok) {
+      alert("Job Accepted Successfully ✅");
+      fetchMyJobs(token);
+      fetchAvailableRequests(token);
+    } else {
+      alert("Failed to accept job ❌");
     }
 
-  };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-  /* ================= COMPLETE JOB ================= */
+  //Marked as complete 
   const completeJob = async (jobId) => {
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
-
-    try {
-
-      const res = await fetch(
-        `http://localhost:8080/api/technician/complete/${jobId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
-
-      if (res.ok) {
-        fetchMyJobs(token);
+  try {
+    const res = await fetch(
+      `http://localhost:8080/api/technician/complete/${jobId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        },
       }
+    );
 
-    } catch (error) {
-      console.error(error);
+    if (res.ok) {
+      alert("✅ Job Marked as Completed");
+      fetchMyJobs(token);           // refresh my jobs
+      fetchAvailableRequests(token); // refresh available requests
+    } else {
+      const errorText = await res.text();
+      console.error("Failed to complete job:", errorText);
+      alert("❌ Failed to complete job");
     }
 
-  };
-
-  /* ================= CALCULATIONS ================= */
-  const totalCompletedJobs = myJobs.filter(
-    (job) => job.request?.status === "COMPLETED"
-  );
-
-  const totalEarnings = totalCompletedJobs.reduce(
-    (acc) => acc + 50,
-    0
-  );
-
-  const completionRate =
-    myJobs.length === 0
-      ? 0
-      : Math.round((totalCompletedJobs.length / myJobs.length) * 100);
-
+  } catch (error) {
+    console.error(error);
+  }
+};
   return (
-    <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h2>
-            <i className="fas fa-hard-hat"></i> TechHub
-          </h2>
+    <div className="d-flex flex-column vh-100">
+
+      {/* Navbar */}
+      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div className="container-fluid px-4">
+
+          <div className="d-flex align-items-center">
+            <button
+              className="navbar-toggler border-0 d-lg-none me-3"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#sidebarOffcanvas"
+            >
+              <span className="navbar-toggler-icon"></span>
+            </button>
+
+            <div className="navbar-brand d-flex align-items-center m-0">
+              <i className="fas fa-cogs text-primary me-2 fs-4"></i>
+              <span className="fw-bold">ServiceHub</span>
+            </div>
+          </div>
+
+          {/* Profile */}
+          <div className="ms-auto">
+            <div
+              className="dropdown"
+              onMouseEnter={() => setProfileDropdown(true)}
+              onMouseLeave={() => setProfileDropdown(false)}
+            >
+              <div
+                className="d-flex align-items-center profile-section"
+                role="button"
+                onClick={() => setProfileDropdown(!profileDropdown)}
+              >
+                <div
+                  className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                  style={{ width: "40px", height: "40px" }}
+                >
+                  <i className="fas fa-user"></i>
+                </div>
+                <span className="d-none d-md-inline text-dark">
+                  {technicianName || "Technician"}
+                </span>
+              </div>
+
+              <ul className={`dropdown-menu dropdown-menu-end ${profileDropdown ? "show" : ""}`}>
+                <li className="px-3 py-2">
+                  <div className="d-flex align-items-center">
+                    <div
+                      className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                      style={{ width: "40px", height: "40px" }}
+                    >
+                      U
+                    </div>
+                    <div>
+                      <div className="fw-bold">
+                        {technicianName || "Technician"}
+                      </div>
+                      <small className="text-muted">Technician</small>
+                    </div>
+                  </div>
+                </li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <button className="dropdown-item text-danger">
+                    <i className="fas fa-sign-out-alt me-2"></i> Logout
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </nav>
+
+      {/* Layout */}
+      <div className="d-flex flex-grow-1 overflow-hidden">
+
+        {/* Sidebar Desktop */}
+        <div
+          className="d-none d-lg-block bg-dark text-white"
+          style={{ width: "250px" }}
+        >
+          <div className="p-4">
+            <ul className="nav nav-pills flex-column">
+
+              <li className="nav-item">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("dashboard")}
+                >
+                  <i className="fas fa-chart-line me-2"></i> Dashboard
+                </button>
+              </li>
+
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "available" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("available")}
+                >
+                  <i className="fas fa-clipboard-list me-2"></i> Available Requests
+                </button>
+              </li>
+
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "jobs" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("jobs")}
+                >
+                  <i className="fas fa-briefcase me-2"></i> My Jobs
+                </button>
+              </li>
+
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "invoice" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("invoice")}
+                >
+                  <i className="fas fa-file-invoice-dollar me-2"></i> Generate Invoice
+                </button>
+              </li>
+
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "earnings" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("earnings")}
+                >
+                  <i className="fas fa-wallet me-2"></i> Earnings
+                </button>
+              </li>
+
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "reviews" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("reviews")}
+                >
+                  <i className="fas fa-star me-2"></i> Reviews
+                </button>
+              </li>
+
+            </ul>
+          </div>
         </div>
 
-        <div className="sidebar-menu">
-          <ul>
+        {/* Main Content */}
+        <div className="flex-grow-1 bg-light">
+          <div className="p-4">
+            <div className="card shadow-sm">
+              <div className="card-body p-4">
 
-            <li
-              className={activePage === "dashboard" ? "active" : ""}
-              onClick={() => setActivePage("dashboard")}
-            >
-              <i className="fas fa-tachometer-alt"></i> Dashboard
+                {activePage === "dashboard" && (
+                  <TechnicianHome
+                    totalEarnings={500}       // later connect from API
+                    completedJobs={10}
+                    totalJobs={15}
+                  />
+                )}
+
+                {activePage === "available" && (
+                  <AvailableRequests
+                    requests={availableRequests}
+                    openAcceptModal={openAcceptModal}
+                  />
+                )}
+
+                {activePage === "jobs" && (
+                  <MyJobs
+                    jobs={myJobs}
+                    completeJob={completeJob}
+                  />
+                )}
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Mobile Sidebar */}
+      <div
+        className="offcanvas offcanvas-start bg-dark text-white"
+        id="sidebarOffcanvas"
+        style={{ width: "100%" }}
+      >
+        <div className="offcanvas-header">
+          <h5>ServiceHub</h5>
+          <button className="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+
+        <div className="offcanvas-body">
+          <ul className="nav nav-pills flex-column">
+
+            {/* Dashboard */}
+            <li className="nav-item">
+              <button
+                className={`nav-link w-100 ${activePage === "dashboard" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("dashboard")}
+              >
+                <i className="fas fa-tachometer-alt me-2"></i> Dashboard
+              </button>
             </li>
 
-            <li
-              className={activePage === "available" ? "active" : ""}
-              onClick={() => setActivePage("available")}
-            >
-              <i className="fas fa-briefcase"></i> Available Requests
+            {/* Available Requests */}
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link w-100 ${activePage === "available" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("available")}
+              >
+                <i className="fas fa-clipboard-list me-2"></i> Available Requests
+              </button>
             </li>
 
-            <li
-              className={activePage === "myjobs" ? "active" : ""}
-              onClick={() => setActivePage("myjobs")}
-            >
-              <i className="fas fa-tasks"></i> My Jobs
+            {/* My Jobs */}
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link w-100 ${activePage === "jobs" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("jobs")}
+              >
+                <i className="fas fa-briefcase me-2"></i> My Jobs
+              </button>
             </li>
 
-            <li
-              className={activePage === "earnings" ? "active" : ""}
-              onClick={() => setActivePage("earnings")}
-            >
-              <i className="fas fa-dollar-sign"></i> Earnings
+            {/* Generate Invoice */}
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link w-100 ${activePage === "invoice" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("invoice")}
+              >
+                <i className="fas fa-file-invoice-dollar me-2"></i> Generate Invoice
+              </button>
             </li>
 
-            <li
-              className={activePage === "reviews" ? "active" : ""}
-              onClick={() => setActivePage("reviews")}
-            >
-              <i className="fas fa-star"></i> Reviews
+            {/* Earnings */}
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link w-100 ${activePage === "earnings" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("earnings")}
+              >
+                <i className="fas fa-rupee-sign me-2"></i> Earnings
+              </button>
+            </li>
+
+            {/* Reviews */}
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link w-100 ${activePage === "reviews" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("reviews")}
+              >
+                <i className="fas fa-star me-2"></i> Reviews
+              </button>
             </li>
 
           </ul>
         </div>
-      </aside>
+      </div>
 
-      <main className="main-content">
-
-        {activePage === "dashboard" && (
-          <>
-            <div className="header">
-              <h1>Welcome back, {technicianName}!</h1>
-              <p>Manage your profile and track your earnings</p>
-            </div>
-
-            <div className="dashboard-content">
-
-              <div className="card">
-                <div className="card-header">
-                  <h2>Profile</h2>
-                </div>
-
-                <div className="profile-card">
-                  <div className="profile-avatar">
-                    {technicianName
-                      ? technicianName.charAt(0).toUpperCase()
-                      : ""}
-                  </div>
-                  <div className="profile-info">
-                    <h3>{technicianName}</h3>
-                    <p>Technician</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="card-header">
-                  <h2>Earnings Summary</h2>
-                </div>
-
-                <div className="earnings-summary">
-
-                  <div className="earning-item">
-                    <h3>Total Earnings</h3>
-                    <p>${totalEarnings}</p>
-                  </div>
-
-                  <div className="earning-item">
-                    <h3>Total Jobs</h3>
-                    <p>{myJobs.length}</p>
-                  </div>
-
-                  <div className="earning-item">
-                    <h3>Completion Rate</h3>
-                    <p>{completionRate}%</p>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-          </>
-        )}
-
-        {activePage === "available" && (
-          <div className="available-wrapper">
-
-            <div className="available-header">
-              <h2>Available Service Requests</h2>
-            </div>
-
-            <div className="request-grid">
-
-              {availableRequests.length === 0 ? (
-                <p>No available requests.</p>
-              ) : (
-
-                availableRequests.map((request) => (
-
-                  <div key={request.requestId} className="request-card-modern">
-
-                    <h3>{request.category?.categoryName}</h3>
-
-                    <p><b>Customer:</b> {request.customer?.name}</p>
-
-                    <p><b>Problem:</b> {request.problemDescription}</p>
-
-                    <p><b>Location:</b> {request.locationAddress}</p>
-
-                    {request.damagePhotoUrl && (
-                      <div className="damage-image-container">
-                        <img
-                          src={request.damagePhotoUrl}
-                          alt="Damage"
-                          className="damage-image"
-                        />
-                      </div>
-                    )}
-
-                    <button
-                      className="btn-accept"
-                      onClick={() => acceptJob(request.requestId)}
-                    >
-                      Accept Job
-                    </button>
-
-                  </div>
-
-                ))
-              )}
-
-            </div>
-          </div>
-        )}
-
-        {activePage === "myjobs" && (
-          <div className="available-wrapper">
-
-            <div className="available-header">
-              <h2>My Jobs</h2>
-            </div>
-
-            <div className="request-grid">
-
-              {myJobs.length === 0 ? (
-                <p>No jobs yet.</p>
-              ) : (
-
-                myJobs.map((job) => (
-
-                  <div key={job.jobId} className="request-card-modern">
-
-                    <h3>{job.request?.category?.categoryName}</h3>
-
-                    <p><b>Problem:</b> {job.request?.problemDescription}</p>
-
-                    <p><b>Status:</b> {job.request?.status}</p>
-
-                    <p><b>Location:</b> {job.request?.locationAddress}</p>
-
-                    {job.request?.damagePhotoUrl && (
-                      <div className="damage-image-container">
-                        <img
-                          src={job.request.damagePhotoUrl}
-                          alt="Damage"
-                          className="damage-image"
-                        />
-                      </div>
-                    )}
-
-                    {job.request?.status === "ACCEPTED" && (
-                      <button
-                        className="btn-accept"
-                        onClick={() => completeJob(job.jobId)}
-                      >
-                        Mark Completed
-                      </button>
-                    )}
-
-                  </div>
-
-                ))
-              )}
-
-            </div>
-          </div>
-        )}
-
-      </main>
     </div>
   );
 }

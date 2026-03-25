@@ -6,6 +6,7 @@ public class RegisterRequestDTO {
     private String email;
     private String password;
     private String role;
+    private Long categoryId; // ✅ NEW
 
     // ===== GETTERS AND SETTERS =====
 
@@ -17,7 +18,15 @@ public class RegisterRequestDTO {
         this.name = name;
     }
 
-    public String getEmail() {
+    public Long getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(Long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public String getEmail() {
         return email;
     }
 

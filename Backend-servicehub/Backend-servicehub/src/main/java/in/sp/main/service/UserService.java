@@ -8,7 +8,9 @@ import in.sp.main.dto.AuthResponseDTO;
 import in.sp.main.dto.LoginRequestDTO;
 import in.sp.main.dto.LoginResponseDTO;
 import in.sp.main.dto.RegisterRequestDTO;
+import in.sp.main.entity.ServiceCategory;
 import in.sp.main.entity.User;
+import in.sp.main.repository.ServiceCategoryRepository;
 import in.sp.main.repository.UserRepository;
 import in.sp.main.security.JwtUtil;
 
@@ -25,19 +27,29 @@ public class UserService {
     private JwtUtil jwtUtil;
 
     // ================= REGISTER =================
+    @Autowired
+    private ServiceCategoryRepository categoryRepo;
+
     public String registerUser(RegisterRequestDTO dto) {
 
-        // Check if email already exists
         if (userRepository.existsByEmail(dto.getEmail())) {
             return "Email already registered!";
         }
 
-        // Create new user
         User user = new User();
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(dto.getRole());
+
+        // ✅ If technician, assign category
+        if ("TECHNICIAN".equals(dto.getRole())) {
+
+            ServiceCategory category = categoryRepo.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+
+            user.setCategory(category);
+        }
 
         userRepository.save(user);
 

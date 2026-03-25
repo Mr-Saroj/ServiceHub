@@ -20,19 +20,27 @@ public class TechnicianController {
 
     // ✅ SHOW ALL CUSTOMER REQUESTS
     @GetMapping("/requests")
-    public List<ServiceRequest> getAllCustomerRequests() {
+    public List<ServiceRequest> getFilteredRequests(Authentication authentication) {
 
-        return serviceRequestService.getAllPendingRequests();
+        String email = authentication.getName();
 
+        return serviceRequestService.getFilteredRequests(email);
     }
     @PutMapping("/accept/{requestId}")
     public ServiceRequest acceptJob(
             @PathVariable Long requestId,
+            @RequestParam String date,
+            @RequestParam String time,
             Authentication authentication) {
 
         String technicianEmail = authentication.getName();
 
-        return serviceRequestService.acceptJob(requestId, technicianEmail);
+        return serviceRequestService.acceptJob(
+                requestId,
+                technicianEmail,
+                date,
+                time
+        );
     }
    
 

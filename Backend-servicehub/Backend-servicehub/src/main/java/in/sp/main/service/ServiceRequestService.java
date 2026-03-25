@@ -34,6 +34,7 @@ public class ServiceRequestService {
 
     @Autowired
     private Cloudinary cloudinary;
+
     @Autowired
     private TechnicianJobRepository technicianJobRepository;
 
@@ -45,6 +46,7 @@ public class ServiceRequestService {
             String locationAddress,
             Double latitude,
             Double longitude,
+            String mobileNumber,
             MultipartFile damagePhoto) {
 
         User customer = userRepo.findByEmail(email)
@@ -55,11 +57,9 @@ public class ServiceRequestService {
 
         String imageUrl = null;
 
-        // Upload image to Cloudinary
+        // ✅ Upload image to Cloudinary
         if (damagePhoto != null && !damagePhoto.isEmpty()) {
-
             try {
-
                 Map uploadResult = cloudinary.uploader().upload(
                         damagePhoto.getBytes(),
                         ObjectUtils.asMap("folder", "servicehub")
@@ -73,14 +73,14 @@ public class ServiceRequestService {
         }
 
         ServiceRequest request = new ServiceRequest();
-
         request.setCustomer(customer);
         request.setCategory(category);
         request.setProblemDescription(problemDescription);
         request.setLocationAddress(locationAddress);
         request.setLatitude(latitude);
         request.setLongitude(longitude);
-        request.setDamagePhotoUrl(imageUrl);  // store Cloudinary URL
+        request.setMobileNumber(mobileNumber);
+        request.setDamagePhotoUrl(imageUrl);
         request.setStatus("PENDING");
 
         return requestRepo.save(request);
@@ -101,20 +101,36 @@ public class ServiceRequestService {
         ServiceRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        // Ensure the request belongs to the logged-in customer
         if (!request.getCustomer().getEmail().equals(email)) {
             throw new RuntimeException("Unauthorized delete attempt");
         }
 
         requestRepo.delete(request);
     }
- // ✅ GET ALL PENDING REQUESTS FOR TECHNICIAN
+
+    // ❌ OLD METHOD (KEEP ONLY IF NEEDED FOR ADMIN)
     public List<ServiceRequest> getAllPendingRequests() {
-
         return requestRepo.findByStatus("PENDING");
-
     }
-    public ServiceRequest acceptJob(Long requestId, String technicianEmail) {
+
+    // ✅🔥 NEW METHOD: FILTERED REQUESTS FOR TECHNICIAN
+    public List<ServiceRequest> getFilteredRequests(String technicianEmail) {
+
+        User technician = userRepo.findByEmail(technicianEmail)
+                .orElseThrow(() -> new RuntimeException("Technician not found"));
+
+        if (technician.getCategory() == null) {
+            throw new RuntimeException("Technician category not assigned");
+        }
+
+        return requestRepo.findByStatusAndCategory_CategoryId(
+                "PENDING",
+                technician.getCategory().getCategoryId()
+        );
+    }
+
+    // ✅ ACCEPT JOB
+    public ServiceRequest acceptJob(Long requestId, String technicianEmail, String date, String time) {
 
         ServiceRequest request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
@@ -122,13 +138,14 @@ public class ServiceRequestService {
         User technician = userRepo.findByEmail(technicianEmail)
                 .orElseThrow(() -> new RuntimeException("Technician not found"));
 
-        // Update service_request table
         request.setStatus("ACCEPTED");
         request.setTechnician(technician);
 
-        ServiceRequest savedRequest = requestRepo.save(request);
+        // ✅ NEW
+        request.setScheduledDate(date);
+        request.setScheduledTime(time);
 
-        // ===== NEW CODE: STORE IN technician_jobs TABLE =====
+        ServiceRequest savedRequest = requestRepo.save(request);
 
         TechnicianJob job = new TechnicianJob();
         job.setTechnician(technician);
@@ -136,16 +153,15 @@ public class ServiceRequestService {
 
         technicianJobRepository.save(job);
 
-        // ===============================================
-
         return savedRequest;
     }
 
+    // ✅ GET TECHNICIAN JOBS
     public List<TechnicianJob> getTechnicianJobs(String email) {
-
         return technicianJobRepository.findByTechnician_Email(email);
-
     }
+
+    // ✅ COMPLETE JOB
     public ServiceRequest completeJob(Long jobId) {
 
         TechnicianJob job = technicianJobRepository.findById(jobId)
@@ -157,5 +173,6 @@ public class ServiceRequestService {
 
         return requestRepo.save(request);
     }
+   
     
 }

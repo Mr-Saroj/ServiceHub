@@ -57,6 +57,9 @@ public class SecurityConfig {
                     // Technician APIs (requires TECHNICIAN role)
                     .requestMatchers("/api/technician/**")
                     .hasRole("TECHNICIAN")
+                 // ✅ ADD THIS (IMPORTANT)
+                    .requestMatchers("/api/invoice/**")
+                    .hasRole("TECHNICIAN")
 
                     // Any other endpoint requires authentication
                     .anyRequest().authenticated()

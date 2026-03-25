@@ -5,8 +5,19 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "users")
 public class User {
+	@ManyToOne
+	@JoinColumn(name = "category_id")
+	private ServiceCategory category;
 
-    @Id
+    public ServiceCategory getCategory() {
+		return category;
+	}
+
+	public void setCategory(ServiceCategory category) {
+		this.category = category;
+	}
+
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 

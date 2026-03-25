@@ -1,3 +1,4 @@
+/* ================= MAIN ================= */
 .register-main {
   flex: 1;
   display: flex;
@@ -8,6 +9,7 @@
   min-height: 100vh;
 }
 
+/* ================= CONTAINER ================= */
 .register-container {
   background-color: var(--light-text);
   border-radius: var(--border-radius);
@@ -17,6 +19,7 @@
   padding: 40px;
 }
 
+/* ================= HEADER ================= */
 .register-header {
   text-align: center;
   margin-bottom: 30px;
@@ -31,6 +34,7 @@
   color: #666;
 }
 
+/* ================= FORM ================= */
 .form-group {
   margin-bottom: 20px;
 }
@@ -68,7 +72,7 @@
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
-/* Role Selection */
+/* ================= ROLE ================= */
 .role-selection {
   display: flex;
   gap: 15px;
@@ -94,7 +98,7 @@
   transition: var(--transition);
 }
 
-.role-option input:checked+label {
+.role-option input:checked + label {
   background-color: rgba(74, 144, 226, 0.1);
   border-color: var(--primary-color);
   color: var(--primary-color);
@@ -106,7 +110,7 @@
   margin-bottom: 8px;
 }
 
-/* Checkbox */
+/* ================= CHECKBOX ================= */
 .checkbox-group {
   display: flex;
   align-items: flex-start;
@@ -132,7 +136,7 @@
   text-decoration: underline;
 }
 
-/* Updated Button Style */
+/* ================= BUTTON ================= */
 .register-btn {
   display: block;
   width: 100%;
@@ -153,7 +157,7 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Divider */
+/* ================= DIVIDER ================= */
 .divider {
   text-align: center;
   margin: 25px 0;
@@ -178,7 +182,7 @@
   font-size: 14px;
 }
 
-/* Social Buttons */
+/* ================= SOCIAL ================= */
 .social-login {
   display: flex;
   gap: 15px;
@@ -209,7 +213,7 @@
   margin-right: 8px;
 }
 
-/* Login Link */
+/* ================= LOGIN LINK ================= */
 .login-link {
   text-align: center;
   margin-top: 25px;
@@ -225,4 +229,87 @@
 
 .login-link a:hover {
   text-decoration: underline;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* Tablet (iPad) */
+@media (max-width: 1024px) {
+  .register-container {
+    max-width: 450px;
+    padding: 30px;
+  }
+
+  .register-header h2 {
+    font-size: 24px;
+  }
+}
+
+/* Small tablets */
+@media (max-width: 768px) {
+  .register-container {
+    max-width: 400px;
+    padding: 25px;
+  }
+
+  .role-selection {
+    flex-direction: column;
+  }
+
+  .social-login {
+    flex-direction: column;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 480px) {
+  .register-main {
+    padding: 20px 10px;
+  }
+
+  .register-container {
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .register-header h2 {
+    font-size: 22px;
+  }
+
+  .register-header p {
+    font-size: 14px;
+  }
+
+  .form-control {
+    font-size: 14px;
+    padding: 10px 12px 10px 40px;
+  }
+
+  .register-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .checkbox-group label {
+    font-size: 13px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .register-header h2 {
+    font-size: 20px;
+  }
+
+  .form-control {
+    font-size: 13px;
+  }
+
+  .register-btn {
+    font-size: 13px;
+  }
+
+  .login-link {
+    font-size: 12px;
+  }
 }

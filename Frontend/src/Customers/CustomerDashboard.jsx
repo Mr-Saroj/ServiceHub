@@ -1,29 +1,18 @@
+// CustomerDashboard.jsx
 import React, { useState, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./CustomerDashboard.css";
 import { useNavigate } from "react-router-dom";
+import Dashboard from "./Dashboard";
+import CreateServiceRequest from "./CreateServiceRequest";
 
 function CustomerDashboard() {
-
   const navigate = useNavigate();
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
-  const [location, setLocation] = useState("");
-  const [openTrackId, setOpenTrackId] = useState(null);
-  const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
-  const [reviewText, setReviewText] = useState("");
-  const [selectedService, setSelectedService] = useState(null);
   const [userName, setUserName] = useState("");
-
-  const [categories, setCategories] = useState([]);
-  const [categoryId, setCategoryId] = useState("");
-  const [problemDescription, setProblemDescription] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [damagePhoto, setDamagePhoto] = useState(null);
-
   const [requests, setRequests] = useState([]);
+  const [token, setToken] = useState("");
+  const [profileDropdown, setProfileDropdown] = useState(false);
 
   const fetchProfile = async (token) => {
     try {
@@ -68,39 +57,6 @@ function CustomerDashboard() {
     }
   };
 
-  const deleteRequest = async (id) => {
-
-    const confirmDelete = window.confirm("Are you sure you want to delete this request?");
-    if (!confirmDelete) return;
-
-    const token = localStorage.getItem("token");
-
-    try {
-
-      const res = await fetch(
-        `http://localhost:8080/api/customer/requests/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
-
-      if (res.ok) {
-
-        alert("Request deleted successfully");
-        fetchRequests(token);
-
-      } else {
-        alert("Failed to delete request");
-      }
-
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  };
-
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -117,6 +73,7 @@ function CustomerDashboard() {
         return;
       }
 
+      setToken(token);
       setUserName(payload.sub);
       fetchProfile(token);
       fetchRequests(token);
@@ -127,299 +84,197 @@ function CustomerDashboard() {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    fetch("http://localhost:8080/api/categories")
-      .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error("Category fetch error:", err));
-  }, []);
-
-  const handleLocation = () => {
-
-  if (navigator.geolocation) {
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-
-      setLatitude(lat);
-      setLongitude(lng);
-
-      try {
-
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-        );
-
-        const data = await res.json();
-
-        if (data.display_name) {
-          setLocation(data.display_name);   // Proper address
-        } else {
-          setLocation(`Lat: ${lat}, Lng: ${lng}`);
-        }
-
-      } catch (error) {
-        console.error("Location fetch error:", error);
-        setLocation(`Lat: ${lat}, Lng: ${lng}`);
-      }
-
-    });
-
-  } else {
-    alert("Geolocation not supported");
-  }
-
-};
-
-  const handleSubmitRequest = async () => {
-
-    const token = localStorage.getItem("token");
-
-    if (!categoryId || !problemDescription || !location || !damagePhoto) {
-      alert("Please fill all required fields");
-      return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("categoryId", categoryId);
-    formData.append("problemDescription", problemDescription);
-    formData.append("locationAddress", location);
-    formData.append("latitude", latitude);
-    formData.append("longitude", longitude);
-    formData.append("damagePhoto", damagePhoto);
-
-    try {
-      const response = await fetch(
-        "http://localhost:8080/api/customer/requests",
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-          body: formData,
-        }
-      );
-
-      if (response.ok) {
-        alert("Service Request Submitted Successfully!");
-
-        setCategoryId("");
-        setProblemDescription("");
-        setLocation("");
-        setLatitude("");
-        setLongitude("");
-        setDamagePhoto(null);
-        setActivePage("dashboard");
-
-        fetchRequests(token);
-
-      } else {
-        alert("Failed to submit request");
-      }
-    } catch (error) {
-      console.error("Submit error:", error);
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
+  const refreshRequests = () => {
+    if (token) {
+      fetchRequests(token);
+    }
+  };
+
+  const handlePageClick = (page) => {
+    setActivePage(page);
+    // Close offcanvas on mobile after selection
+    const offcanvasElement = document.getElementById('sidebarOffcanvas');
+    if (offcanvasElement) {
+      const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
+      if (offcanvas) offcanvas.hide();
+    }
+  };
+
   return (
-    <div className="dashboard-container">
+    <div className="d-flex flex-column vh-100">
+      {/* Full-width Bootstrap Navbar */}
+      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div className="container-fluid px-4">
+          <div className="d-flex align-items-center">
+            <button
+              className="navbar-toggler border-0 d-lg-none me-3"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#sidebarOffcanvas"
+              aria-controls="sidebarOffcanvas"
+            >
+              <span className="navbar-toggler-icon"></span>
+            </button>
+            <div className="navbar-brand d-flex align-items-center m-0">
+              <i className="fas fa-cogs text-primary me-2 fs-4"></i>
+              <span className="fw-bold">ServiceHub</span>
+            </div>
+          </div>
 
-      <button
-        className="mobile-menu-toggle"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        <i className="fas fa-bars"></i>
-      </button>
-
-      <aside className={`sidebar ${sidebarOpen ? "active" : ""}`}>
-        <div className="sidebar-header">
-          <h2>
-            <i className="fas fa-user-circle"></i> My Account
-          </h2>
+          <div className="ms-auto">
+            <div
+              className="dropdown"
+              onMouseEnter={() => setProfileDropdown(true)}
+              onMouseLeave={() => setProfileDropdown(false)}
+            >
+              <div
+                className="d-flex align-items-center profile-section"
+                role="button"
+                id="profileDropdown"
+                onClick={() => setProfileDropdown(!profileDropdown)}
+              >
+                <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                  style={{ width: '40px', height: '40px' }}>
+                  <i className="fas fa-user"></i>
+                </div>
+                <span className="d-none d-md-inline text-dark">{userName}</span>
+              </div>
+              <ul className={`dropdown-menu dropdown-menu-end ${profileDropdown ? 'show' : ''}`}
+                aria-labelledby="profileDropdown">
+                <li className="px-3 py-2">
+                  <div className="d-flex align-items-center">
+                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                      style={{ width: '40px', height: '40px' }}>
+                      {userName ? userName.charAt(0).toUpperCase() : ""}
+                    </div>
+                    <div>
+                      <div className="fw-bold">{userName}</div>
+                      <small className="text-muted">Customer</small>
+                    </div>
+                  </div>
+                </li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <button className="dropdown-item text-danger" onClick={handleLogout}>
+                    <i className="fas fa-sign-out-alt me-2"></i> Logout
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
+      </nav>
 
-        <div className="sidebar-menu">
-          <ul>
-            <li
-              className={activePage === "dashboard" ? "active" : ""}
-              onClick={() => setActivePage("dashboard")}
-            >
-              <i className="fas fa-tachometer-alt"></i>
-              <span>Dashboard</span>
+      {/* Main Container with Sidebar and Content */}
+      <div className="d-flex flex-grow-1 overflow-hidden">
+        {/* Sidebar for Desktop - Fixed width */}
+        <div
+          className="d-none d-lg-block bg-dark text-white flex-shrink-0"
+          style={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}
+        >
+          <div className="p-4 h-100">
+            <ul className="nav nav-pills flex-column">
+              <li className="nav-item">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("dashboard")}
+                >
+                  <i className="fas fa-tachometer-alt me-2"></i> Dashboard
+                </button>
+              </li>
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "create" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("create")}
+                >
+                  <i className="fas fa-plus-circle me-2"></i> Create Service Request
+                </button>
+              </li>
+              <li className="nav-item mt-2">
+                <button
+                  className="nav-link text-start w-100 text-white"
+                  onClick={handleLogout}
+                >
+                  <i className="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        {/* Main Content Area */}
+        <div className="flex-grow-1 bg-light overflow-hidden">
+          <div className="main-content-scroll">
+            <div className="p-4">
+              <div className="card shadow-sm">
+                <div className="card-body p-4">
+                  {activePage === "dashboard" && (
+                    <div className="fade-in">
+                      <Dashboard
+                        requests={requests}
+                        refreshRequests={refreshRequests}
+                        token={token}
+                      />
+                    </div>
+                  )}
+
+                  {activePage === "create" && (
+                    <div className="fade-in">
+                      <CreateServiceRequest
+                        refreshRequests={refreshRequests}
+                        setActivePage={setActivePage}
+                        token={token}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar - Bootstrap Offcanvas */}
+      <div className="offcanvas offcanvas-start bg-dark text-white" tabIndex="-1" id="sidebarOffcanvas"
+        aria-labelledby="sidebarOffcanvasLabel" style={{ width: '100%' }}>
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title" id="sidebarOffcanvasLabel">ServiceHub</h5>
+          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+        </div>
+        <div className="offcanvas-body">
+          <ul className="nav nav-pills flex-column">
+            <li className="nav-item">
+              <button
+                className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"}`}
+                onClick={() => handlePageClick("dashboard")}
+              >
+                <i className="fas fa-tachometer-alt me-2"></i> Dashboard
+              </button>
             </li>
-
-            <li
-              className={activePage === "create" ? "active" : ""}
-              onClick={() => setActivePage("create")}
-            >
-              <i className="fas fa-plus-circle"></i>
-              <span>Create Service Request</span>
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link text-start w-100 ${activePage === "create" ? "active" : "text-white"}`}
+                onClick={() => handlePageClick("create")}
+              >
+                <i className="fas fa-plus-circle me-2"></i> Create Service Request
+              </button>
             </li>
-
-            <li onClick={handleLogout}>
-              <i className="fas fa-sign-out-alt"></i>
-              <span>Logout</span>
+            <li className="nav-item mt-2">
+              <button
+                className="nav-link text-start w-100 text-white"
+                onClick={handleLogout}
+              >
+                <i className="fas fa-sign-out-alt me-2"></i> Logout
+              </button>
             </li>
           </ul>
         </div>
-      </aside>
-
-      <main className="main-content">
-        <div className="header">
-          <div className="welcome-section">
-            <h1>Welcome back, {userName}!</h1>
-            <p>Manage your service requests easily</p>
-          </div>
-
-          <div className="user-info">
-            <div className="user-avatar">
-              {userName ? userName.charAt(0).toUpperCase() : ""}
-            </div>
-            <div className="user-name">{userName}</div>
-          </div>
-        </div>
-
-        <div className="dashboard-content">
-          <div className="card">
-
-            {activePage === "dashboard" && (
-
-              <div className="requests-section">
-
-                <h3>Your Service Requests</h3>
-
-                {requests.length === 0 ? (
-                  <p>No service requests yet</p>
-                ) : (
-
-                  requests.map((req) => (
-
-                    <div key={req.requestId} className="request-card">
-
-                      <div className="request-image">
-                        {req.damagePhotoUrl && (
-                          <img
-                            src={req.damagePhotoUrl}
-                            alt="damage"
-                            width="120"
-                          />
-                        )}
-                      </div>
-
-                      <div className="request-details">
-
-                        <h4>{req.category?.categoryName}</h4>
-
-                        <p>
-                          <strong>Problem:</strong> {req.problemDescription}
-                        </p>
-
-                        <p>
-                          <strong>Location:</strong> {req.locationAddress}
-                        </p>
-
-                        <p>
-                          <strong>Status:</strong> {req.status}
-                        </p>
-
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => deleteRequest(req.requestId)}
-                        >
-                          Delete
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                  ))
-
-                )}
-
-              </div>
-
-            )}
-
-            {activePage === "create" && (
-              <div className="request-form">
-                <h3>Create Service Request</h3>
-
-                <div className="form-group">
-                  <label>Technician Type Required</label>
-                  <select
-                    className="form-control"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                  >
-                    <option value="">Select Technician</option>
-                    {categories.map((cat) => (
-                      <option key={cat.categoryId} value={cat.categoryId}>
-                        {cat.categoryName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Problem Description</label>
-                  <textarea
-                    className="form-control"
-                    value={problemDescription}
-                    onChange={(e) => setProblemDescription(e.target.value)}
-                  ></textarea>
-                </div>
-
-                <div className="form-group">
-                  <label>Upload Damage Photo</label>
-                  <input
-                    type="file"
-                    className="form-control"
-                    accept="image/*"
-                    onChange={(e) => setDamagePhoto(e.target.files[0])}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Current Location</label>
-                  <div className="location-box">
-                    <input
-                      type="text"
-                      value={location}
-                      readOnly
-                      placeholder="Click share location"
-                      className="form-control"
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      onClick={handleLocation}
-                    >
-                      Share Location
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  className="btn btn-success"
-                  onClick={handleSubmitRequest}
-                >
-                  Submit
-                </button>
-              </div>
-            )}
-
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

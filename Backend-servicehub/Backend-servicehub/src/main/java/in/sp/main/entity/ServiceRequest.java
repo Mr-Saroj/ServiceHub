@@ -25,95 +25,7 @@ public class ServiceRequest {
     @JoinColumn(name = "technician_id")
     private User technician;
 
-    public Long getRequestId() {
-		return requestId;
-	}
-
-	public void setRequestId(Long requestId) {
-		this.requestId = requestId;
-	}
-
-	public User getCustomer() {
-		return customer;
-	}
-
-	public void setCustomer(User customer) {
-		this.customer = customer;
-	}
-
-	public User getTechnician() {
-		return technician;
-	}
-
-	public void setTechnician(User technician) {
-		this.technician = technician;
-	}
-
-	public ServiceCategory getCategory() {
-		return category;
-	}
-
-	public void setCategory(ServiceCategory category) {
-		this.category = category;
-	}
-
-	public String getProblemDescription() {
-		return problemDescription;
-	}
-
-	public void setProblemDescription(String problemDescription) {
-		this.problemDescription = problemDescription;
-	}
-
-	public String getDamagePhotoUrl() {
-		return damagePhotoUrl;
-	}
-
-	public void setDamagePhotoUrl(String damagePhotoUrl) {
-		this.damagePhotoUrl = damagePhotoUrl;
-	}
-
-	public String getLocationAddress() {
-		return locationAddress;
-	}
-
-	public void setLocationAddress(String locationAddress) {
-		this.locationAddress = locationAddress;
-	}
-
-	public Double getLatitude() {
-		return latitude;
-	}
-
-	public void setLatitude(Double latitude) {
-		this.latitude = latitude;
-	}
-
-	public Double getLongitude() {
-		return longitude;
-	}
-
-	public void setLongitude(Double longitude) {
-		this.longitude = longitude;
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	@ManyToOne
+    @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private ServiceCategory category;
 
@@ -123,9 +35,131 @@ public class ServiceRequest {
     private Double latitude;
     private Double longitude;
 
+    private String mobileNumber; // ✅ NEW FIELD
+
     private String status; // PENDING, ACCEPTED, COMPLETED
+    
+    
 
     private LocalDateTime createdAt;
+    private String scheduledDate;
+    public String getScheduledDate() {
+		return scheduledDate;
+	}
+
+	public void setScheduledDate(String scheduledDate) {
+		this.scheduledDate = scheduledDate;
+	}
+
+	public String getScheduledTime() {
+		return scheduledTime;
+	}
+
+	public void setScheduledTime(String scheduledTime) {
+		this.scheduledTime = scheduledTime;
+	}
+
+	private String scheduledTime;
+
+    // ================= GETTERS & SETTERS =================
+
+    public Long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Long requestId) {
+        this.requestId = requestId;
+    }
+
+    public User getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(User customer) {
+        this.customer = customer;
+    }
+
+    public User getTechnician() {
+        return technician;
+    }
+
+    public void setTechnician(User technician) {
+        this.technician = technician;
+    }
+
+    public ServiceCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(ServiceCategory category) {
+        this.category = category;
+    }
+
+    public String getProblemDescription() {
+        return problemDescription;
+    }
+
+    public void setProblemDescription(String problemDescription) {
+        this.problemDescription = problemDescription;
+    }
+
+    public String getDamagePhotoUrl() {
+        return damagePhotoUrl;
+    }
+
+    public void setDamagePhotoUrl(String damagePhotoUrl) {
+        this.damagePhotoUrl = damagePhotoUrl;
+    }
+
+    public String getLocationAddress() {
+        return locationAddress;
+    }
+
+    public void setLocationAddress(String locationAddress) {
+        this.locationAddress = locationAddress;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getMobileNumber() { // ✅ NEW
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) { // ✅ NEW
+        this.mobileNumber = mobileNumber;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // ================= AUTO FIELDS =================
 
     @PrePersist
     public void prePersist() {
