@@ -38,10 +38,27 @@ public class ServiceRequest {
     private String mobileNumber; // ✅ NEW FIELD
 
     private String status; // PENDING, ACCEPTED, COMPLETED
-    
+    private Double serviceCharge;
+    private LocalDateTime completedAt;
     
 
-    private LocalDateTime createdAt;
+    public LocalDateTime getCompletedAt() {
+		return completedAt;
+	}
+
+	public void setCompletedAt(LocalDateTime completedAt) {
+		this.completedAt = completedAt;
+	}
+
+	public Double getServiceCharge() {
+		return serviceCharge;
+	}
+
+	public void setServiceCharge(Double serviceCharge) {
+		this.serviceCharge = serviceCharge;
+	}
+
+	private LocalDateTime createdAt;
     private String scheduledDate;
     public String getScheduledDate() {
 		return scheduledDate;

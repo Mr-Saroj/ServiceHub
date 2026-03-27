@@ -7,6 +7,7 @@ import in.sp.main.entity.ServiceRequest;
 import in.sp.main.entity.User;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Repository
 public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, Long> {
@@ -31,4 +32,19 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
 
     // ✅ (Optional) Get requests by status + technician
     List<ServiceRequest> findByStatusAndTechnician_Email(String status, String email);
+ // ✅ Get completed jobs for a technician (USED IN EARNINGS)
+ // ✅ CORRECT METHOD FOR EARNINGS
+//    List<ServiceRequest> findByTechnician_UserIdAndStatus(Long userId, String status);
+    List<ServiceRequest> findByTechnician_EmailAndStatusAndCreatedAtAfter(
+            String email,
+            String status,
+            LocalDateTime time
+    );
+    List<ServiceRequest> findByTechnicianAndCompletedAtAfterAndStatus(
+            User technician,
+            LocalDateTime time,
+            String status
+    );
+    List<ServiceRequest> findByTechnicianAndStatus(User technician, String status);
+    
 }

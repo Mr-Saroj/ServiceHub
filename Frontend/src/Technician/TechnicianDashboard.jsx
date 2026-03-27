@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./TechnicianDashboard.css";
 import TechnicianHome from "./TechnicianHome";
 import AvailableRequests from "./AvailableRequests";
+import TechnicianEarnings from "./TechnicianEarnings";
 import MyJobs from "./MyJobs";
 function TechnicianDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -11,6 +12,16 @@ function TechnicianDashboard() {
   const [technicianName, setTechnicianName] = useState("");
   const [availableRequests, setAvailableRequests] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
+  const [amounts, setAmounts] = useState({});
+  const [earnings, setEarnings] = useState({
+    totalEarnings: 0,
+    completedJobs: 0,
+    jobs: []
+  });
+  const [totalStats, setTotalStats] = useState({
+    totalEarnings: 0,
+    completedJobs: 0,
+  });
 
   const handlePageClick = (page) => {
     setActivePage(page);
@@ -34,6 +45,8 @@ function TechnicianDashboard() {
         fetchAvailableRequests(token);
 
         fetchMyJobs(token);
+        fetchEarnings(token);
+        fetchTotalEarnings(token);
 
       } catch (error) {
         console.error("Invalid token");
@@ -95,72 +108,136 @@ function TechnicianDashboard() {
 
   //accept job
   const acceptJob = async (id, date, time) => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (!id) {
-    alert("Request ID missing ❌");
-    return;
-  }
-
-  if (!date || !time) {
-    alert("Please select date & time");
-    return;
-  }
-
-  try {
-    const res = await fetch(
-      `http://localhost:8080/api/technician/accept/${id}?date=${date}&time=${time}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      }
-    );
-
-    if (res.ok) {
-      alert("Job Accepted Successfully ✅");
-      fetchMyJobs(token);
-      fetchAvailableRequests(token);
-    } else {
-      alert("Failed to accept job ❌");
+    if (!id) {
+      alert("Request ID missing ❌");
+      return;
     }
 
-  } catch (error) {
-    console.error(error);
-  }
-};
+    if (!date || !time) {
+      alert("Please select date & time");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/technician/accept/${id}?date=${date}&time=${time}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        alert("Job Accepted Successfully ✅");
+        fetchMyJobs(token);
+        fetchAvailableRequests(token);
+      } else {
+        alert("Failed to accept job ❌");
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   //Marked as complete 
+  // ✅ COMPLETE JOB
   const completeJob = async (jobId) => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    const amount = amounts[jobId];
 
-  try {
+    if (!amount) {
+      alert("Enter amount");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/technician/complete/${jobId}?amount=${amount}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        alert("✅ Job Completed");
+        fetchMyJobs(token);  // ✅ refresh jobs
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ✅ DOWNLOAD INVOICE
+  const downloadInvoice = async (jobId) => {
+    const token = localStorage.getItem("token");
+
     const res = await fetch(
-      `http://localhost:8080/api/technician/complete/${jobId}`,
+      `http://localhost:8080/api/technician/invoice/${jobId}`,
       {
-        method: "PUT",
         headers: {
           Authorization: "Bearer " + token,
-          "Content-Type": "application/json"
         },
       }
     );
 
-    if (res.ok) {
-      alert("✅ Job Marked as Completed");
-      fetchMyJobs(token);           // refresh my jobs
-      fetchAvailableRequests(token); // refresh available requests
-    } else {
-      const errorText = await res.text();
-      console.error("Failed to complete job:", errorText);
-      alert("❌ Failed to complete job");
-    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
 
-  } catch (error) {
-    console.error(error);
-  }
-};
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `invoice_${jobId}.pdf`;
+    a.click();
+  };
+
+  //earning
+  const fetchEarnings = async (token) => {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/technician/earnings",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setEarnings(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  //fetch total earning
+  const fetchTotalEarnings = async (token) => {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/technician/earnings/total",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setTotalStats(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <div className="d-flex flex-column vh-100">
 
@@ -275,14 +352,6 @@ function TechnicianDashboard() {
                 </button>
               </li>
 
-              <li className="nav-item mt-2">
-                <button
-                  className={`nav-link text-start w-100 ${activePage === "invoice" ? "active" : "text-white"}`}
-                  onClick={() => handlePageClick("invoice")}
-                >
-                  <i className="fas fa-file-invoice-dollar me-2"></i> Generate Invoice
-                </button>
-              </li>
 
               <li className="nav-item mt-2">
                 <button
@@ -314,9 +383,9 @@ function TechnicianDashboard() {
 
                 {activePage === "dashboard" && (
                   <TechnicianHome
-                    totalEarnings={500}       // later connect from API
-                    completedJobs={10}
-                    totalJobs={15}
+                    totalEarnings={totalStats.totalEarnings}
+                    completedJobs={totalStats.completedJobs}
+                    totalJobs={myJobs.length}
                   />
                 )}
 
@@ -329,8 +398,18 @@ function TechnicianDashboard() {
 
                 {activePage === "jobs" && (
                   <MyJobs
-                    jobs={myJobs}
+                    jobs={myJobs}   // ✅ correct
+                    amounts={amounts}
+                    setAmounts={setAmounts}
                     completeJob={completeJob}
+                    downloadInvoice={downloadInvoice}
+                  />
+                )}
+
+                {activePage === "earnings" && (
+                  <TechnicianEarnings
+                    earnings={earnings}
+                    downloadInvoice={downloadInvoice}
                   />
                 )}
 
@@ -388,16 +467,6 @@ function TechnicianDashboard() {
               </button>
             </li>
 
-            {/* Generate Invoice */}
-            <li className="nav-item mt-2">
-              <button
-                className={`nav-link w-100 ${activePage === "invoice" ? "active" : "text-white"
-                  }`}
-                onClick={() => handlePageClick("invoice")}
-              >
-                <i className="fas fa-file-invoice-dollar me-2"></i> Generate Invoice
-              </button>
-            </li>
 
             {/* Earnings */}
             <li className="nav-item mt-2">
