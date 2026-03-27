@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import in.sp.main.dto.LoginRequestDTO;
 
 import in.sp.main.dto.RegisterRequestDTO;
+import in.sp.main.dto.UserProfileDTO;
 import in.sp.main.entity.User;
 import in.sp.main.service.UserService;
 
@@ -35,11 +36,29 @@ public class AuthController {
         String token = userService.loginUser(dto);
         return ResponseEntity.ok(token);   // ✅ return token only
     }
-    @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userService.getUserByEmail(userDetails.getUsername());
-        return ResponseEntity.ok(user);
-    }
+   @GetMapping("/profile")
+   public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+       User user = userService.getUserByEmail(userDetails.getUsername());
+       return ResponseEntity.ok(user);
+   }
     
     
+    // @GetMapping("/profile")
+    // public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+    //     User user = userService.getUserByEmail(userDetails.getUsername());
+
+    //     String categoryName = null;
+    //     if (user.getCategory() != null) {
+    //         categoryName = user.getCategory().getCategoryName();
+    //     }
+
+    //     UserProfileDTO profileDTO = new UserProfileDTO(
+    //             user.getName(),
+    //             user.getEmail(),
+    //             user.getRole(),
+    //             categoryName
+    //     );
+
+    //     return ResponseEntity.ok(profileDTO);
+    // }
 }

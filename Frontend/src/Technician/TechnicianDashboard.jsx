@@ -6,6 +6,8 @@ import TechnicianHome from "./TechnicianHome";
 import AvailableRequests from "./AvailableRequests";
 import TechnicianEarnings from "./TechnicianEarnings";
 import MyJobs from "./MyJobs";
+import TechnicianProfile from "./TechnicianProfile"; // Import the new component
+
 function TechnicianDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
   const [profileDropdown, setProfileDropdown] = useState(false);
@@ -41,9 +43,7 @@ function TechnicianDashboard() {
         const payload = JSON.parse(atob(token.split(".")[1]));
         setTechnicianName(payload.sub);
 
-
         fetchAvailableRequests(token);
-
         fetchMyJobs(token);
         fetchEarnings(token);
         fetchTotalEarnings(token);
@@ -54,11 +54,7 @@ function TechnicianDashboard() {
     }
   }, []);
 
-
-
-
   //fetch all request of customer 
-
   const fetchAvailableRequests = async (token) => {
     try {
       const res = await fetch(
@@ -80,7 +76,6 @@ function TechnicianDashboard() {
   };
 
   //fetch only accepted job by technician
-
   const fetchMyJobs = async (token) => {
     try {
       const res = await fetch(
@@ -319,7 +314,7 @@ function TechnicianDashboard() {
 
         {/* Sidebar Desktop */}
         <div
-          className="d-none d-lg-block bg-dark text-white"
+          className="d-none d-lg-block bg-dark text-white flex-shrink-0"
           style={{ width: "250px" }}
         >
           <div className="p-4">
@@ -352,13 +347,21 @@ function TechnicianDashboard() {
                 </button>
               </li>
 
-
               <li className="nav-item mt-2">
                 <button
                   className={`nav-link text-start w-100 ${activePage === "earnings" ? "active" : "text-white"}`}
                   onClick={() => handlePageClick("earnings")}
                 >
                   <i className="fas fa-wallet me-2"></i> Earnings
+                </button>
+              </li>
+
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "profile" ? "active" : "text-white"}`}
+                  onClick={() => handlePageClick("profile")}
+                >
+                  <i className="fas fa-user-circle me-2"></i> Profile
                 </button>
               </li>
 
@@ -376,8 +379,8 @@ function TechnicianDashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-grow-1 bg-light">
-          <div className="p-4">
+        <div className="flex-grow-1 bg-light d-flex flex-column overflow-hidden">
+          <div className="p-4 overflow-auto" style={{ height: "100%" }}>
             <div className="card shadow-sm">
               <div className="card-body p-4">
 
@@ -411,6 +414,10 @@ function TechnicianDashboard() {
                     earnings={earnings}
                     downloadInvoice={downloadInvoice}
                   />
+                )}
+
+                {activePage === "profile" && (
+                  <TechnicianProfile />
                 )}
 
               </div>
@@ -467,7 +474,6 @@ function TechnicianDashboard() {
               </button>
             </li>
 
-
             {/* Earnings */}
             <li className="nav-item mt-2">
               <button
@@ -476,6 +482,17 @@ function TechnicianDashboard() {
                 onClick={() => handlePageClick("earnings")}
               >
                 <i className="fas fa-rupee-sign me-2"></i> Earnings
+              </button>
+            </li>
+
+            {/* Profile */}
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link w-100 ${activePage === "profile" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("profile")}
+              >
+                <i className="fas fa-user-circle me-2"></i> Profile
               </button>
             </li>
 

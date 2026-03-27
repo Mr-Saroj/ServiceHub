@@ -1,0 +1,45 @@
+/* Profile Component Styles */
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-image {
+  border: 4px solid #f8f9fa;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item {
+  padding: 0.5rem 0;
+}
+
+.card-header {
+  border-bottom: none;
+}
+
+.list-group-item {
+  border-left: none;
+  border-right: none;
+}
+
+.list-group-item:first-child {
+  border-top: none;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-container .col-md-4,
+  .profile-container .col-md-6,
+  .profile-container .col-md-8 {
+    margin-bottom: 1rem;
+  }
+}
