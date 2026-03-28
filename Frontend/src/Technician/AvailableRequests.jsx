@@ -8,10 +8,10 @@ function AvailableRequests({ requests, openAcceptModal }) {
 
   /* OPEN MODAL */
   const handleOpen = (id) => {
-  console.log("Selected ID:", id); // ✅ check here
-  setSelectedRequestId(id);
-  setShowModal(true);
-};
+    console.log("Selected ID:", id); // ✅ check here
+    setSelectedRequestId(id);
+    setShowModal(true);
+  };
   /* CONFIRM */
   const handleConfirm = () => {
     if (!scheduleDate || !scheduleTime) {
@@ -110,7 +110,6 @@ function AvailableRequests({ requests, openAcceptModal }) {
         </div>
       )}
 
-      {/* ================= MODAL ================= */}
       {/* ================= MODAL ================= */}
       {showModal && (
         <>
