@@ -19,7 +19,7 @@ COPY --from=build /app/target/Backend-servicehub-0.0.1-SNAPSHOT.jar app.jar
 # Expose port
 EXPOSE 8080
 
-COPY .env .   # copy to /app
+
 
 # Run the Spring Boot app
 ENTRYPOINT ["java","-jar","app.jar"]
