@@ -20,7 +20,7 @@ function Register() {
 
   // ✅ FETCH CATEGORIES
   useEffect(() => {
-    fetch("http://localhost:8080/api/categories")
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/categories`)
       .then((res) => res.json())
       .then((data) => setCategories(data))
       .catch((err) => console.error("Error fetching categories:", err));
