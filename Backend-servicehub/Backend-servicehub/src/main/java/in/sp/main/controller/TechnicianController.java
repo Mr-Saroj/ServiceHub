@@ -13,7 +13,7 @@ import in.sp.main.service.ServiceRequestService;
 
 @RestController
 @RequestMapping("/api/technician")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${FRONTEND_URL}")
 public class TechnicianController {
 
     @Autowired

@@ -17,6 +17,9 @@ public class BackendServicehubApplication {
 	        System.setProperty("SERVER_PORT", dotenv.get("SERVER_PORT"));
 	        System.setProperty("MAIL_USERNAME", dotenv.get("MAIL_USERNAME"));
 	        System.setProperty("MAIL_PASSWORD", dotenv.get("MAIL_PASSWORD"));
+	        System.setProperty("FRONTEND_URL", dotenv.get("FRONTEND_URL"));
+	        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
+	        System.setProperty("JWT_EXPIRATION", dotenv.get("JWT_EXPIRATION"));
 		SpringApplication.run(BackendServicehubApplication.class, args);
 	}
 }

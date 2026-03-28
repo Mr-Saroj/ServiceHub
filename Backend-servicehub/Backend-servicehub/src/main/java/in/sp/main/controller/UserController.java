@@ -11,7 +11,7 @@ import in.sp.main.service.UserService;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${FRONTEND_URL}")
 public class UserController {
 
     @Autowired
