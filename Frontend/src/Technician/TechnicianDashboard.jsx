@@ -12,126 +12,144 @@ function TechnicianDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [technicianName, setTechnicianName] = useState("");
+
   const [availableRequests, setAvailableRequests] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [amounts, setAmounts] = useState({});
+
   const [earnings, setEarnings] = useState({
     totalEarnings: 0,
     completedJobs: 0,
-    jobs: []
+    jobs: [],
   });
+
   const [totalStats, setTotalStats] = useState({
     totalEarnings: 0,
     completedJobs: 0,
   });
 
+  const [profile, setProfile] = useState(null);
+
+  // ================= NAVIGATION =================
   const handlePageClick = (page) => {
     setActivePage(page);
 
     const offcanvasElement = document.getElementById("sidebarOffcanvas");
     if (offcanvasElement && window.bootstrap) {
-      const offcanvas = window.bootstrap.Offcanvas.getInstance(offcanvasElement);
+      const offcanvas =
+        window.bootstrap.Offcanvas.getInstance(offcanvasElement);
       if (offcanvas) offcanvas.hide();
     }
   };
 
+  // ================= INITIAL LOAD =================
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setTechnicianName(payload.sub);
+    if (!token) return;
 
-        fetchAvailableRequests(token);
-        fetchMyJobs(token);
-        fetchEarnings(token);
-        fetchTotalEarnings(token);
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setTechnicianName(payload.sub);
 
-      } catch (error) {
-        console.error("Invalid token");
-      }
+      loadAllData(token); // ✅ single entry point
+
+    } catch (error) {
+      console.error("Invalid token");
     }
   }, []);
 
-  //fetch all request of customer 
+  // ================= MASTER LOADER =================
+  const loadAllData = (token) => {
+    fetchProfile(token);
+    fetchAvailableRequests(token);
+    fetchMyJobs(token);
+    fetchEarnings(token);
+    fetchTotalEarnings(token);
+  };
+
+  // ================= PROFILE =================
+  const fetchProfile = async (token) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/profile`, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
+
+      if (!res.ok) throw new Error("Profile fetch failed");
+
+      const data = await res.json();
+      setProfile(data);
+
+    } catch (err) {
+      console.error("Profile Error:", err);
+    }
+  };
+
+  // ================= REQUESTS =================
   const fetchAvailableRequests = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/technician/requests",
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/requests`,
         {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
-      if (res.ok) {
-        const data = await res.json();
-        setAvailableRequests(data);
-      }
+      if (!res.ok) throw new Error("Request fetch failed");
+
+      const data = await res.json();
+      setAvailableRequests(data);
+
     } catch (error) {
       console.error(error);
     }
   };
 
-  //fetch only accepted job by technician
+  // ================= JOBS =================
   const fetchMyJobs = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/technician/my-jobs",
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/my-jobs`,
         {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
-      if (res.ok) {
-        const data = await res.json();
-        console.log("MY JOBS:", data); // ✅ debug
-        setMyJobs(data);
-      }
+      if (!res.ok) throw new Error("Jobs fetch failed");
+
+      const data = await res.json();
+      setMyJobs(data);
+
     } catch (error) {
       console.error(error);
     }
   };
 
-  const openAcceptModal = (id, date, time) => {
-    acceptJob(id, date, time);
-  };
-
-  //accept job
+  // ================= ACCEPT JOB =================
   const acceptJob = async (id, date, time) => {
     const token = localStorage.getItem("token");
 
-    if (!id) {
-      alert("Request ID missing ❌");
-      return;
-    }
-
-    if (!date || !time) {
-      alert("Please select date & time");
+    if (!id || !date || !time) {
+      alert("Missing details ❌");
       return;
     }
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/technician/accept/${id}?date=${date}&time=${time}`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/accept/${id}?date=${date}&time=${time}`,
         {
           method: "PUT",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
       if (res.ok) {
-        alert("Job Accepted Successfully ✅");
-        fetchMyJobs(token);
-        fetchAvailableRequests(token);
+        alert("✅ Job Accepted");
+        loadAllData(token); // ✅ refresh everything
       } else {
-        alert("Failed to accept job ❌");
+        alert("❌ Failed");
       }
 
     } catch (error) {
@@ -139,8 +157,7 @@ function TechnicianDashboard() {
     }
   };
 
-  //Marked as complete 
-  // ✅ COMPLETE JOB
+  // ================= COMPLETE JOB =================
   const completeJob = async (jobId) => {
     const token = localStorage.getItem("token");
     const amount = amounts[jobId];
@@ -152,83 +169,82 @@ function TechnicianDashboard() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/technician/complete/${jobId}?amount=${amount}`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/complete/${jobId}?amount=${amount}`,
         {
           method: "PUT",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
       if (res.ok) {
         alert("✅ Job Completed");
-        fetchMyJobs(token);  // ✅ refresh jobs
+        loadAllData(token); // ✅ refresh
       }
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  // ✅ DOWNLOAD INVOICE
+  // ================= DOWNLOAD INVOICE =================
   const downloadInvoice = async (jobId) => {
     const token = localStorage.getItem("token");
 
-    const res = await fetch(
-      `http://localhost:8080/api/technician/invoice/${jobId}`,
-      {
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      }
-    );
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `invoice_${jobId}.pdf`;
-    a.click();
-  };
-
-  //earning
-  const fetchEarnings = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/technician/earnings",
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/invoice/${jobId}`,
         {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
-      if (res.ok) {
-        const data = await res.json();
-        setEarnings(data);
-      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice_${jobId}.pdf`;
+      a.click();
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  //fetch total earning
-  const fetchTotalEarnings = async (token) => {
+  // ================= EARNINGS =================
+  const fetchEarnings = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/technician/earnings/total",
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/earnings`,
         {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
-      if (res.ok) {
-        const data = await res.json();
-        setTotalStats(data);
-      }
+      if (!res.ok) throw new Error();
+
+      const data = await res.json();
+      setEarnings(data);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchTotalEarnings = async (token) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/technician/earnings/total`,
+        {
+          headers: { Authorization: "Bearer " + token },
+        }
+      );
+
+      if (!res.ok) throw new Error();
+
+      const data = await res.json();
+      setTotalStats(data);
+
     } catch (err) {
       console.error(err);
     }
@@ -268,40 +284,77 @@ function TechnicianDashboard() {
                 role="button"
                 onClick={() => setProfileDropdown(!profileDropdown)}
               >
-                <div
-                  className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                  style={{ width: "40px", height: "40px" }}
-                >
-                  <i className="fas fa-user"></i>
-                </div>
+
+                {/* ✅ PROFILE IMAGE */}
+                {profile?.profileImageUrl ? (
+                  <img
+                    src={profile.profileImageUrl}
+                    alt="Profile"
+                    className="rounded-circle me-2"
+                    style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                  />
+                ) : (
+                  <div
+                    className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                    style={{ width: "40px", height: "40px" }}
+                  >
+                    {profile?.name
+                      ? profile.name.charAt(0).toUpperCase()
+                      : "U"}
+                  </div>
+                )}
+
+                {/* ✅ NAME */}
                 <span className="d-none d-md-inline text-dark">
-                  {technicianName || "Technician"}
+                  {profile?.name || technicianName || "Technician"}
                 </span>
               </div>
 
+              {/* DROPDOWN */}
               <ul className={`dropdown-menu dropdown-menu-end ${profileDropdown ? "show" : ""}`}>
+
                 <li className="px-3 py-2">
                   <div className="d-flex align-items-center">
-                    <div
-                      className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                      style={{ width: "40px", height: "40px" }}
-                    >
-                      U
-                    </div>
+
+                    {/* ✅ SMALL IMAGE */}
+                    {profile?.profileImageUrl ? (
+                      <img
+                        src={profile.profileImageUrl}
+                        alt="Profile"
+                        className="rounded-circle me-2"
+                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div
+                        className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                        style={{ width: "40px", height: "40px" }}
+                      >
+                        {profile?.name
+                          ? profile.name.charAt(0).toUpperCase()
+                          : "U"}
+                      </div>
+                    )}
+
                     <div>
                       <div className="fw-bold">
-                        {technicianName || "Technician"}
+                        {profile?.name || "Technician"}
                       </div>
-                      <small className="text-muted">Technician</small>
+                      <small className="text-muted">
+                        {profile?.role || "Technician"}
+                      </small>
                     </div>
+
                   </div>
                 </li>
+
                 <li><hr className="dropdown-divider" /></li>
+
                 <li>
                   <button className="dropdown-item text-danger">
                     <i className="fas fa-sign-out-alt me-2"></i> Logout
                   </button>
                 </li>
+
               </ul>
             </div>
           </div>
@@ -395,7 +448,7 @@ function TechnicianDashboard() {
                 {activePage === "available" && (
                   <AvailableRequests
                     requests={availableRequests}
-                    openAcceptModal={openAcceptModal}
+                    openAcceptModal={acceptJob}
                   />
                 )}
 
@@ -417,7 +470,10 @@ function TechnicianDashboard() {
                 )}
 
                 {activePage === "profile" && (
-                  <TechnicianProfile />
+                  <TechnicianProfile
+                    profile={profile}
+                    refreshProfile={() => fetchProfile(localStorage.getItem("token"))}
+                  />
                 )}
 
               </div>

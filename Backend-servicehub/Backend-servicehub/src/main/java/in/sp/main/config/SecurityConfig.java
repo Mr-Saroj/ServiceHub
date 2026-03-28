@@ -53,6 +53,8 @@ public class SecurityConfig {
                     // Customer APIs (requires CUSTOMER role)
                     .requestMatchers("/api/customer/**")
                     .hasRole("CUSTOMER")
+                    
+                    .requestMatchers("/api/user/**").authenticated()
 
                     // Technician APIs (requires TECHNICIAN role)
                     .requestMatchers("/api/technician/**")

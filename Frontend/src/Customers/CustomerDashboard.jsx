@@ -17,7 +17,7 @@ function CustomerDashboard() {
   const fetchProfile = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/customer/profile",
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/profile`,
         {
           headers: {
             Authorization: "Bearer " + token,
@@ -39,7 +39,7 @@ function CustomerDashboard() {
   const fetchRequests = async (token) => {
     try {
       const res = await fetch(
-        "http://localhost:8080/api/customer/requests/my",
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/my`,
         {
           headers: {
             Authorization: "Bearer " + token,

@@ -9,7 +9,7 @@ function Dashboard({ requests, refreshRequests, token }) {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/customer/requests/${id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/${id}`,
         {
           method: "DELETE",
           headers: {

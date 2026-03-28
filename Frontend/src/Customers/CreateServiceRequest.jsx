@@ -19,7 +19,7 @@ function CreateServiceRequest({ refreshRequests, setActivePage, token }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/categories")
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/categories`)
       .then((res) => res.json())
       .then((data) => {
         setCategories(data);
@@ -70,7 +70,7 @@ function CreateServiceRequest({ refreshRequests, setActivePage, token }) {
 
     try {
       const res = await fetch(
-        "http://localhost:8080/api/customer/requests",
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests`,
         {
           method: "POST",
           headers: { Authorization: "Bearer " + token },

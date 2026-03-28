@@ -1,28 +1,49 @@
 package in.sp.main.dto;
 
 public class UserProfileDTO {
+
     private String name;
     private String email;
     private String role;
-    private String categoryName; // null if customer
+    private String category;
+    private String mobileNumber;
+    private String profileImageUrl;
 
-    public UserProfileDTO(String name, String email, String role, String categoryName) {
+    // ✅ FULL CONSTRUCTOR (IMPORTANT)
+    public UserProfileDTO(String name, String email, String role,
+                          String category, String mobileNumber,
+                          String profileImageUrl) {
         this.name = name;
         this.email = email;
         this.role = role;
-        this.categoryName = categoryName;
+        this.category = category;
+        this.mobileNumber = mobileNumber;
+        this.profileImageUrl = profileImageUrl;
     }
 
-    // ✅ Getters and setters
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    // ✅ GETTERS
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getName() {
+        return name;
+    }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
 
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public String getRole() {
+        return role;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
 }
