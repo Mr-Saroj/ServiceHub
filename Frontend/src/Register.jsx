@@ -97,6 +97,7 @@ function Register() {
           body: JSON.stringify(requestData),
         }
       );
+      console.log("ENV:", import.meta.env.VITE_API_BASE_URL);
 
       const message = await response.text();
 
