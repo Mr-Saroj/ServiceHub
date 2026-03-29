@@ -1,6 +1,7 @@
 package in.sp.main.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,70 +26,87 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
+    // ✅ Get frontend URL from ENV
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // Disable CSRF for API usage (Postman, frontend)
+            // ❌ Disable CSRF
             .csrf(csrf -> csrf.disable())
 
-            // Enable CORS with configuration
+            // ✅ Enable CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // Stateless session; we rely on JWT
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            // ✅ Stateless session (JWT)
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // Authorization rules
+            // ✅ Authorization rules
             .authorizeHttpRequests(auth -> auth
 
-                    // Public endpoints (login, register, categories, uploads)
-                    .requestMatchers(
-                            "/api/auth/**",
-                            "/api/categories",
-                            "/uploads/**"
-                    ).permitAll()
+                // Public endpoints
+                .requestMatchers(
+                        "/api/auth/**",
+                        "/api/categories",
+                        "/uploads/**"
+                ).permitAll()
 
-                    // Customer APIs (requires CUSTOMER role)
-                    .requestMatchers("/api/customer/**")
-                    .hasRole("CUSTOMER")
-                    
-                    .requestMatchers("/api/user/**").authenticated()
+                // Customer APIs
+                .requestMatchers("/api/customer/**")
+                .hasRole("CUSTOMER")
 
-                    // Technician APIs (requires TECHNICIAN role)
-                    .requestMatchers("/api/technician/**")
-                    .hasRole("TECHNICIAN")
-                 // ✅ ADD THIS (IMPORTANT)
-                    .requestMatchers("/api/invoice/**")
-                    .hasRole("TECHNICIAN")
+                // User APIs
+                .requestMatchers("/api/user/**")
+                .authenticated()
 
-                    // Any other endpoint requires authentication
-                    .anyRequest().authenticated()
+                // Technician APIs
+                .requestMatchers("/api/technician/**")
+                .hasRole("TECHNICIAN")
+
+                .requestMatchers("/api/invoice/**")
+                .hasRole("TECHNICIAN")
+
+                // Others
+                .anyRequest().authenticated()
             )
 
-            // Add JWT filter before the default authentication filter
+            // ✅ JWT Filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // AuthenticationManager bean (needed if you have JWT login)
+    // ✅ Authentication Manager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // CORS configuration
+    // ✅ FINAL CORS CONFIG (IMPORTANT)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // React frontend
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                frontendUrl   // ✅ from ENV (Vercel)
+        ));
+
+        configuration.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
