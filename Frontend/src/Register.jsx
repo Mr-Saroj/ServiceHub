@@ -20,7 +20,6 @@ function Register() {
 
   // ✅ FETCH CATEGORIES
   useEffect(() => {
-    console.log("ENV BASE URL:", import.meta.env.VITE_API_BASE_URL);
     fetch(`${import.meta.env.VITE_API_BASE_URL}/api/categories`)
       .then((res) => res.json())
       .then((data) => setCategories(data))
@@ -50,7 +49,6 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("REGISTER API URL:", `${import.meta.env.VITE_API_BASE_URL}/api/auth/register`);
 
     if (!formData.name || !formData.email || !formData.password) {
       CustomAlert.fire({
