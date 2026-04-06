@@ -7,6 +7,7 @@ import Dashboard from "./Dashboard";
 import CreateServiceRequest from "./CreateServiceRequest";
 import CustomerProfile from "./CustomerProfile";
 import CustomerPaidHistory from "./CustomerPaidHistory";
+import Swal from "sweetalert2";
 
 function CustomerDashboard() {
   const navigate = useNavigate();
@@ -52,29 +53,44 @@ function CustomerDashboard() {
 
   // ================= HANDLE PAYMENT =================
   const handlePayment = async (requestId) => {
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/pay/${requestId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
-
-      if (res.ok) {
-        alert("Payment confirmed!");
-        fetchRequests(token); // Refresh requests
-      } else {
-        alert("Payment failed. Please try again.");
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/confirm-payment/${requestId}`,
+      {
+        method: "POST", // must match Spring Boot
+        headers: {
+          Authorization: "Bearer " + token,
+        },
       }
-    } catch (error) {
-      console.error("Payment error:", error);
-    }
-  };
+    );
 
+    if (res.ok) {
+      CustomAlert.fire({
+        title: "Payment Successful!",
+        text: "Your payment has been confirmed.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+      fetchRequests(token); // Refresh requests
+    } else {
+      const errorMsg = await res.text();
+      CustomAlert.fire({
+        title: "Payment Failed",
+        text: errorMsg || "Something went wrong. Please try again.",
+        icon: "error",
+        confirmButtonText: "Retry",
+      });
+    }
+  } catch (error) {
+    console.error("Payment error:", error);
+    CustomAlert.fire({
+      title: "Payment Error",
+      text: "Unable to process payment. Check your network or try again later.",
+      icon: "error",
+      confirmButtonText: "Retry",
+    });
+  }
+};
   // ================= INITIALIZATION =================
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -103,10 +119,33 @@ function CustomerDashboard() {
   }, [navigate]);
 
   // ================= LOGOUT =================
+  const CustomAlert = Swal.mixin({
+  background: "#ffffff",
+  color: "#333",
+  confirmButtonColor: "#4A90E2",
+  customClass: {
+    popup: "swal-popup",
+    title: "swal-title",
+    confirmButton: "swal-confirm-btn",
+    cancelButton: "swal-cancel-btn"
+  },
+  buttonsStyling: false
+});
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  CustomAlert.fire({
+    title: "Are you sure you want to logout?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Logout",
+    cancelButtonText: "Cancel",
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+  });
+};
 
   const refreshRequests = () => {
     if (token) fetchRequests(token);

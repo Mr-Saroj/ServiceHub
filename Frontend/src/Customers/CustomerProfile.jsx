@@ -5,7 +5,7 @@ import "./CustomerProfile.css";
 function CustomerProfile({ token }) {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-
+  const [isSaving, setIsSaving] = useState(false);
   const [editedInfo, setEditedInfo] = useState({
     name: "",
     mobileNumber: "",
@@ -73,6 +73,8 @@ function CustomerProfile({ token }) {
   // ================= SAVE PROFILE =================
   const handleSave = async () => {
     try {
+      setIsSaving(true); // ✅ start loading
+
       const formData = new FormData();
       formData.append("name", editedInfo.name);
       formData.append("mobileNumber", editedInfo.mobileNumber);
@@ -101,9 +103,10 @@ function CustomerProfile({ token }) {
     } catch (err) {
       console.error(err);
       alert("❌ Update failed");
+    } finally {
+      setIsSaving(false); // ✅ stop loading
     }
   };
-
   return (
     <div className="container-fluid profile-page">
       <div className="row">
@@ -153,8 +156,12 @@ function CustomerProfile({ token }) {
               </button>
             ) : (
               <div className="d-flex gap-2 justify-content-center">
-                <button className="btn btn-success" onClick={handleSave}>
-                  Save
+                <button
+                  className="btn btn-success"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save"}
                 </button>
                 <button
                   className="btn btn-secondary"

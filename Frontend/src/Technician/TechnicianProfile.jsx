@@ -5,7 +5,7 @@ import "./TechnicianProfile.css";
 
 function TechnicianProfile({ profile, refreshProfile }) {
   const [isEditing, setIsEditing] = useState(false);
-
+  const [isSaving, setIsSaving] = useState(false);
   const [editedInfo, setEditedInfo] = useState({
     name: profile?.name || "",
     mobileNumber: profile?.mobileNumber || "",
@@ -41,49 +41,50 @@ function TechnicianProfile({ profile, refreshProfile }) {
 
   // ✅ SAVE PROFILE (API CALL)
   const handleSave = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  try {
+    setIsSaving(true); // ✅ START LOADING
 
-      const formData = new FormData();
-      formData.append("name", editedInfo.name);
-      formData.append("mobileNumber", editedInfo.mobileNumber);
+    const token = localStorage.getItem("token");
 
-      if (imageFile) {
-        formData.append("profileImage", imageFile);
-      }
+    const formData = new FormData();
+    formData.append("name", editedInfo.name);
+    formData.append("mobileNumber", editedInfo.mobileNumber);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/user/profile`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Update failed");
-      }
-
-      alert("✅ Profile Updated Successfully");
-
-      setIsEditing(false);
-
-      // 🔥 Refresh parent data
-      refreshProfile();
-
-    } catch (error) {
-      console.error(error);
-      alert("❌ Failed to update profile");
+    if (imageFile) {
+      formData.append("profileImage", imageFile);
     }
-  };
 
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/user/profile`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Update failed");
+    }
+
+    alert("✅ Profile Updated Successfully");
+
+    setIsEditing(false);
+    refreshProfile();
+
+  } catch (error) {
+    console.error(error);
+    alert("❌ Failed to update profile");
+  } finally {
+    setIsSaving(false); // ✅ STOP LOADING (IMPORTANT)
+  }
+};
   return (
     <div className="profile-container p-4">
       <div className="row">
-        
+
         {/* LEFT CARD */}
         <div className="col-md-4 mb-4">
           <div className="card shadow-sm h-100">
@@ -144,8 +145,9 @@ function TechnicianProfile({ profile, refreshProfile }) {
                   <button
                     className="btn btn-success"
                     onClick={handleSave}
+                    disabled={isSaving}
                   >
-                    Save
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
                   <button
                     className="btn btn-secondary ms-2"

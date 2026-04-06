@@ -68,3 +68,31 @@
     
   }
 }
+
+/* alert */
+.swal-popup {
+  border-radius: 12px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.swal-title {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.swal-confirm-btn {
+  background-color: #4A90E2 !important;
+  color: #fff !important;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.swal-cancel-btn {
+  background-color: #f5f5f5 !important;
+  color: #333 !important;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-right: 5px;
+}
