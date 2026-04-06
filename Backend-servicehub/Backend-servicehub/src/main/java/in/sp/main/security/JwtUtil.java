@@ -2,18 +2,29 @@ package in.sp.main.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-	private final String SECRET = System.getProperty("JWT_SECRET");
-    private final long EXPIRATION = Long.parseLong(System.getProperty("JWT_EXPIRATION"));
+    @Value("${JWT_SECRET}")
+    private String secret;
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    @Value("${JWT_EXPIRATION}")
+    private long expiration;
+
+    private Key key;
+
+    // Initialize key AFTER values are injected
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     // Generate JWT Token
     public String generateToken(String email, String role) {
@@ -22,7 +33,7 @@ public class JwtUtil {
                 .setSubject(email)
                 .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
+                .setExpiration(new Date(System.currentTimeMillis() + expiration)) // ✅ dynamic
                 .signWith(key)
                 .compact();
     }
