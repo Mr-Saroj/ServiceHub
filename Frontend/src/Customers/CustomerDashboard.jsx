@@ -5,6 +5,8 @@ import "./CustomerDashboard.css";
 import { useNavigate } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import CreateServiceRequest from "./CreateServiceRequest";
+import CustomerProfile from "./CustomerProfile";
+import CustomerPaidHistory from "./CustomerPaidHistory";
 
 function CustomerDashboard() {
   const navigate = useNavigate();
@@ -14,49 +16,66 @@ function CustomerDashboard() {
   const [token, setToken] = useState("");
   const [profileDropdown, setProfileDropdown] = useState(false);
 
+  // ================= FETCH CUSTOMER PROFILE =================
   const fetchProfile = async (token) => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/api/customer/profile`,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
+        { headers: { Authorization: "Bearer " + token } }
       );
 
       if (res.ok) {
         const data = await res.json();
-        if (data.fullName) {
-          setUserName(data.fullName);
-        }
+        if (data.fullName) setUserName(data.fullName);
       }
     } catch (error) {
       console.error("Profile fetch error:", error);
     }
   };
 
+  // ================= FETCH CUSTOMER SERVICE REQUESTS =================
   const fetchRequests = async (token) => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/my`,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
+        { headers: { Authorization: "Bearer " + token } }
       );
 
       if (res.ok) {
         const data = await res.json();
         setRequests(data);
       }
-
     } catch (error) {
       console.error("Request fetch error:", error);
     }
   };
 
+  // ================= HANDLE PAYMENT =================
+  const handlePayment = async (requestId) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/pay/${requestId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (res.ok) {
+        alert("Payment confirmed!");
+        fetchRequests(token); // Refresh requests
+      } else {
+        alert("Payment failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+    }
+  };
+
+  // ================= INITIALIZATION =================
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -77,28 +96,26 @@ function CustomerDashboard() {
       setUserName(payload.sub);
       fetchProfile(token);
       fetchRequests(token);
-
     } catch (error) {
       localStorage.removeItem("token");
       navigate("/login");
     }
   }, [navigate]);
 
+  // ================= LOGOUT =================
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
   const refreshRequests = () => {
-    if (token) {
-      fetchRequests(token);
-    }
+    if (token) fetchRequests(token);
   };
 
   const handlePageClick = (page) => {
     setActivePage(page);
     // Close offcanvas on mobile after selection
-    const offcanvasElement = document.getElementById('sidebarOffcanvas');
+    const offcanvasElement = document.getElementById("sidebarOffcanvas");
     if (offcanvasElement) {
       const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
       if (offcanvas) offcanvas.hide();
@@ -107,7 +124,7 @@ function CustomerDashboard() {
 
   return (
     <div className="d-flex flex-column vh-100">
-      {/* Full-width Bootstrap Navbar */}
+      {/* ================= NAVBAR ================= */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div className="container-fluid px-4">
           <div className="d-flex align-items-center">
@@ -138,18 +155,25 @@ function CustomerDashboard() {
                 id="profileDropdown"
                 onClick={() => setProfileDropdown(!profileDropdown)}
               >
-                <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                  style={{ width: '40px', height: '40px' }}>
+                <div
+                  className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                  style={{ width: "40px", height: "40px" }}
+                >
                   <i className="fas fa-user"></i>
                 </div>
                 <span className="d-none d-md-inline text-dark">{userName}</span>
               </div>
-              <ul className={`dropdown-menu dropdown-menu-end ${profileDropdown ? 'show' : ''}`}
-                aria-labelledby="profileDropdown">
+              <ul
+                className={`dropdown-menu dropdown-menu-end ${profileDropdown ? "show" : ""
+                  }`}
+                aria-labelledby="profileDropdown"
+              >
                 <li className="px-3 py-2">
                   <div className="d-flex align-items-center">
-                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                      style={{ width: '40px', height: '40px' }}>
+                    <div
+                      className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                      style={{ width: "40px", height: "40px" }}
+                    >
                       {userName ? userName.charAt(0).toUpperCase() : ""}
                     </div>
                     <div>
@@ -158,9 +182,14 @@ function CustomerDashboard() {
                     </div>
                   </div>
                 </li>
-                <li><hr className="dropdown-divider" /></li>
                 <li>
-                  <button className="dropdown-item text-danger" onClick={handleLogout}>
+                  <hr className="dropdown-divider" />
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item text-danger"
+                    onClick={handleLogout}
+                  >
                     <i className="fas fa-sign-out-alt me-2"></i> Logout
                   </button>
                 </li>
@@ -170,18 +199,19 @@ function CustomerDashboard() {
         </div>
       </nav>
 
-      {/* Main Container with Sidebar and Content */}
+      {/* ================= MAIN CONTAINER ================= */}
       <div className="d-flex flex-grow-1 overflow-hidden">
-        {/* Sidebar for Desktop - Fixed width */}
+        {/* Sidebar Desktop */}
         <div
           className="d-none d-lg-block bg-dark text-white flex-shrink-0"
-          style={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}
+          style={{ width: "250px", minWidth: "250px", maxWidth: "250px" }}
         >
           <div className="p-4 h-100">
             <ul className="nav nav-pills flex-column">
               <li className="nav-item">
                 <button
-                  className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"}`}
+                  className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"
+                    }`}
                   onClick={() => handlePageClick("dashboard")}
                 >
                   <i className="fas fa-tachometer-alt me-2"></i> Dashboard
@@ -189,7 +219,8 @@ function CustomerDashboard() {
               </li>
               <li className="nav-item mt-2">
                 <button
-                  className={`nav-link text-start w-100 ${activePage === "create" ? "active" : "text-white"}`}
+                  className={`nav-link text-start w-100 ${activePage === "create" ? "active" : "text-white"
+                    }`}
                   onClick={() => handlePageClick("create")}
                 >
                   <i className="fas fa-plus-circle me-2"></i> Create Service Request
@@ -197,15 +228,26 @@ function CustomerDashboard() {
               </li>
               <li className="nav-item mt-2">
                 <button
-                  className="nav-link text-start w-100 text-white"
-                  onClick={handleLogout}
+                  className={`nav-link text-start w-100 ${activePage === "paidHistory" ? "active" : "text-white"
+                    }`}
+                  onClick={() => handlePageClick("paidHistory")}
                 >
-                  <i className="fas fa-sign-out-alt me-2"></i> Logout
+                  <i className="fas fa-money-bill-wave me-2"></i>History
+                </button>
+              </li>
+              <li className="nav-item mt-2">
+                <button
+                  className={`nav-link text-start w-100 ${activePage === "profile" ? "active" : "text-white"
+                    }`}
+                  onClick={() => handlePageClick("profile")}
+                >
+                  <i className="fas fa-user me-2"></i> Profile
                 </button>
               </li>
             </ul>
           </div>
         </div>
+
         {/* Main Content Area */}
         <div className="flex-grow-1 bg-light overflow-hidden">
           <div className="main-content-scroll">
@@ -218,6 +260,7 @@ function CustomerDashboard() {
                         requests={requests}
                         refreshRequests={refreshRequests}
                         token={token}
+                        onPay={handlePayment} // ✅ Pass payment handler
                       />
                     </div>
                   )}
@@ -231,6 +274,18 @@ function CustomerDashboard() {
                       />
                     </div>
                   )}
+
+                  {activePage === "profile" && (
+                    <CustomerProfile token={token} />
+                  )}
+
+                  {/* ✅ ADDED THIS BLOCK TO SHOW PAID HISTORY ✅ */}
+                  {activePage === "paidHistory" && (
+                    <div className="fade-in">
+                      <CustomerPaidHistory token={token} />
+                    </div>
+                  )}
+
                 </div>
               </div>
             </div>
@@ -238,19 +293,31 @@ function CustomerDashboard() {
         </div>
       </div>
 
-      {/* Mobile Sidebar - Bootstrap Offcanvas */}
-      <div className="offcanvas offcanvas-start bg-dark text-white" tabIndex="-1" id="sidebarOffcanvas"
-        aria-labelledby="sidebarOffcanvasLabel" style={{ width: '100%' }}>
+      {/* Mobile Sidebar */}
+      <div
+        className="offcanvas offcanvas-start bg-dark text-white"
+        tabIndex="-1"
+        id="sidebarOffcanvas"
+        aria-labelledby="sidebarOffcanvasLabel"
+        style={{ width: "100%" }}
+      >
         <div className="offcanvas-header">
-          <h5 className="offcanvas-title" id="sidebarOffcanvasLabel">ServiceHub</h5>
-          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas"
-            aria-label="Close"></button>
+          <h5 className="offcanvas-title" id="sidebarOffcanvasLabel">
+            ServiceHub
+          </h5>
+          <button
+            type="button"
+            className="btn-close btn-close-white"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
         </div>
         <div className="offcanvas-body">
           <ul className="nav nav-pills flex-column">
             <li className="nav-item">
               <button
-                className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"}`}
+                className={`nav-link text-start w-100 ${activePage === "dashboard" ? "active" : "text-white"
+                  }`}
                 onClick={() => handlePageClick("dashboard")}
               >
                 <i className="fas fa-tachometer-alt me-2"></i> Dashboard
@@ -258,7 +325,8 @@ function CustomerDashboard() {
             </li>
             <li className="nav-item mt-2">
               <button
-                className={`nav-link text-start w-100 ${activePage === "create" ? "active" : "text-white"}`}
+                className={`nav-link text-start w-100 ${activePage === "create" ? "active" : "text-white"
+                  }`}
                 onClick={() => handlePageClick("create")}
               >
                 <i className="fas fa-plus-circle me-2"></i> Create Service Request
@@ -266,10 +334,20 @@ function CustomerDashboard() {
             </li>
             <li className="nav-item mt-2">
               <button
-                className="nav-link text-start w-100 text-white"
-                onClick={handleLogout}
+                className={`nav-link text-start w-100 ${activePage === "paidHistory" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("paidHistory")}
               >
-                <i className="fas fa-sign-out-alt me-2"></i> Logout
+                <i className="fas fa-money-bill-wave me-2"></i>History
+              </button>
+            </li>
+            <li className="nav-item mt-2">
+              <button
+                className={`nav-link text-start w-100 ${activePage === "profile" ? "active" : "text-white"
+                  }`}
+                onClick={() => handlePageClick("profile")}
+              >
+                <i className="fas fa-user me-2"></i> Profile
               </button>
             </li>
           </ul>

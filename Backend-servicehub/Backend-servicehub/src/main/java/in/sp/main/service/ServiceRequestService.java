@@ -24,9 +24,12 @@ import in.sp.main.repository.UserRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ServiceRequestService {
@@ -97,14 +100,27 @@ public class ServiceRequestService {
         return requestRepo.save(request);
     }
 
-    // ✅ GET CUSTOMER REQUESTS
+ // ✅ GET CUSTOMER REQUESTS
     public List<ServiceRequest> getRequestsByCustomer(String email) {
-
         User customer = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return requestRepo.findByCustomer(customer);
+        // Fetch PENDING and ACCEPTED requests (paymentStatus doesn't matter)
+        List<String> activeStatuses = Arrays.asList("PENDING", "ACCEPTED");
+        List<ServiceRequest> activeRequests = requestRepo.findByCustomerAndStatusIn(customer, activeStatuses);
+
+        // Fetch COMPLETED requests where paymentStatus is NotConfirm
+        List<ServiceRequest> completedNotConfirmed = requestRepo.findByCustomerAndStatusAndPaymentStatus(customer, "COMPLETED", "NotConfirm");
+
+        // Combine the two lists
+        List<ServiceRequest> result = new ArrayList<>();
+        result.addAll(activeRequests);
+        result.addAll(completedNotConfirmed);
+
+        return result;
     }
+    
+    
 
     // ✅ DELETE REQUEST
     public void deleteRequest(Long requestId, String email) {
@@ -183,10 +199,17 @@ public class ServiceRequestService {
         // ✅ update status
         request.setStatus("COMPLETED");
 
-        // ✅ save technician fee
-        request.setServiceCharge(amount);
+        // ✅ apply 5% deduction
+        double discount = amount * 0.05;
+        double finalAmount = amount - discount;
 
-        // ✅ SET COMPLETION TIME (IMPORTANT 🔥)
+        // ✅ save discounted amount
+        request.setServiceCharge(finalAmount);
+
+        // (Optional) if you want to track discount separately
+        // request.setDiscount(discount);
+
+        // ✅ SET COMPLETION TIME
         request.setCompletedAt(LocalDateTime.now());
 
         ServiceRequest saved = requestRepo.save(request);
@@ -209,6 +232,7 @@ public class ServiceRequestService {
                     .orElseThrow(() -> new RuntimeException("Job not found"));
 
             ServiceRequest req = job.getRequest();
+            User technician = job.getTechnician(); // ✅ get technician
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -216,48 +240,80 @@ public class ServiceRequestService {
             PdfDocument pdf = new PdfDocument(writer);
             Document document = new Document(pdf);
 
-            // HEADER
-            document.add(new Paragraph("ServiceHub").setBold().setFontSize(20));
-            document.add(new Paragraph("INVOICE").setFontSize(14));
+            // ================= HEADER =================
+            document.add(new Paragraph("ServiceHub")
+                    .setBold()
+                    .setFontSize(20));
+
+            document.add(new Paragraph("INVOICE")
+                    .setFontSize(14));
+
             document.add(new Paragraph(" "));
 
             document.add(new Paragraph("Invoice ID: " + jobId));
             document.add(new Paragraph("Date: " + java.time.LocalDate.now()));
             document.add(new Paragraph(" "));
 
-            // CUSTOMER
+            // ================= CUSTOMER =================
             document.add(new Paragraph("Customer Details").setBold());
-            document.add(new Paragraph(req.getCustomer().getName()));
-            document.add(new Paragraph(req.getMobileNumber()));
-            document.add(new Paragraph(req.getLocationAddress()));
+            document.add(new Paragraph("Name: " + req.getCustomer().getName()));
+            document.add(new Paragraph("Mobile: " + req.getMobileNumber()));
+            document.add(new Paragraph("Address: " + req.getLocationAddress()));
             document.add(new Paragraph(" "));
 
-            // TABLE
-            Table table = new Table(new float[]{200, 100});
+            // ================= TECHNICIAN =================
+            document.add(new Paragraph("Technician Details").setBold());
 
-            table.addCell("Service");
+            if (technician != null) {
+                document.add(new Paragraph("Name: " + technician.getName()));
+                document.add(new Paragraph("Email: " + technician.getEmail()));
+                document.add(new Paragraph("Mobile: " + technician.getMobileNumber()));
+            } else {
+                document.add(new Paragraph("Not Assigned"));
+            }
+
+            document.add(new Paragraph(" "));
+
+            // ================= CALCULATIONS =================
+            double finalAmount = req.getServiceCharge(); // after 5% deduction
+
+            double originalAmount = finalAmount / 0.95;
+            double platformFee = originalAmount - finalAmount;
+
+            // ================= TABLE =================
+            Table table = new Table(new float[]{300, 150});
+
+            // Header
+            table.addCell("Description");
             table.addCell("Amount");
 
+            // Service
             table.addCell(req.getCategory().getCategoryName());
-            table.addCell("₹" + req.getServiceCharge());
+            table.addCell("₹" + String.format("%.2f", originalAmount));
 
-            table.addCell("Total");
-            table.addCell("₹" + req.getServiceCharge());
+            // Platform Fee
+            table.addCell("Platform Fee (5%)");
+            table.addCell("- ₹" + String.format("%.2f", platformFee));
+
+            // Total
+            table.addCell("Total Payable");
+            table.addCell("₹" + String.format("%.2f", finalAmount));
 
             document.add(table);
 
+            // ================= FOOTER =================
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Thank you!"));
+            document.add(new Paragraph("Thank you for using ServiceHub!").setBold());
 
             document.close();
 
             return out.toByteArray();
 
         } catch (Exception e) {
-            throw new RuntimeException("PDF Error");
+            e.printStackTrace();
+            throw new RuntimeException("PDF Error: " + e.getMessage());
         }
     }
- 
 
     public Map<String, Object> getTechnicianEarningsLast24Hours(String email) {
 
@@ -310,6 +366,52 @@ public class ServiceRequestService {
 
         return res;
     }
-   
     
+ // ✅ Update payment status
+ // ✅ Update payment status
+    public void updatePaymentStatus(Long requestId, String customerEmail) {
+        ServiceRequest request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Service Request not found"));
+
+        if (!request.getCustomer().getEmail().equals(customerEmail)) {
+            throw new RuntimeException("Unauthorized action");
+        }
+
+        request.setPaymentStatus("PAID"); // <- change here
+        requestRepo.save(request);
+    }
+   
+ // in ServiceRequestService.java
+    public List<ServiceRequest> getPaidRequests(String customerEmail) {
+        User customer = userRepo.findByEmail(customerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return requestRepo.findByCustomerAndPaymentStatus(customer, "PAID");
+    }
+    
+    public void rateServiceRequest(Long requestId, int rating, String email) {
+
+        ServiceRequest request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        // 🔒 Security check
+        if (!request.getCustomer().getEmail().equals(email)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        // ✅ Only completed services
+        if (!"COMPLETED".equalsIgnoreCase(request.getStatus())) {
+            throw new RuntimeException("You can only rate completed services");
+        }
+
+        // ⭐ Validate rating
+        if (rating < 1 || rating > 5) {
+            throw new RuntimeException("Rating must be between 1 and 5");
+        }
+
+        // ✅ Save rating
+        request.setRating(rating);
+
+        requestRepo.save(request);
+    }    
 }

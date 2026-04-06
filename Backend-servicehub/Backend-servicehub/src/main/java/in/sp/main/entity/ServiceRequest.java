@@ -40,43 +40,14 @@ public class ServiceRequest {
     private String status; // PENDING, ACCEPTED, COMPLETED
     private Double serviceCharge;
     private LocalDateTime completedAt;
-    
 
-    public LocalDateTime getCompletedAt() {
-		return completedAt;
-	}
-
-	public void setCompletedAt(LocalDateTime completedAt) {
-		this.completedAt = completedAt;
-	}
-
-	public Double getServiceCharge() {
-		return serviceCharge;
-	}
-
-	public void setServiceCharge(Double serviceCharge) {
-		this.serviceCharge = serviceCharge;
-	}
-
-	private LocalDateTime createdAt;
+    private LocalDateTime createdAt;
     private String scheduledDate;
-    public String getScheduledDate() {
-		return scheduledDate;
-	}
+    private String scheduledTime;
 
-	public void setScheduledDate(String scheduledDate) {
-		this.scheduledDate = scheduledDate;
-	}
-
-	public String getScheduledTime() {
-		return scheduledTime;
-	}
-
-	public void setScheduledTime(String scheduledTime) {
-		this.scheduledTime = scheduledTime;
-	}
-
-	private String scheduledTime;
+    private String paymentStatus = "PENDING"; // default PENDING// ✅ NEW FIELD (NotConfirm / Confirm)
+    private int rating = 0; // ⭐ default 0
+    
 
     // ================= GETTERS & SETTERS =================
 
@@ -84,7 +55,15 @@ public class ServiceRequest {
         return requestId;
     }
 
-    public void setRequestId(Long requestId) {
+    public int getRating() {
+		return rating;
+	}
+
+	public void setRating(int rating) {
+		this.rating = rating;
+	}
+
+	public void setRequestId(Long requestId) {
         this.requestId = requestId;
     }
 
@@ -152,11 +131,11 @@ public class ServiceRequest {
         this.longitude = longitude;
     }
 
-    public String getMobileNumber() { // ✅ NEW
+    public String getMobileNumber() {
         return mobileNumber;
     }
 
-    public void setMobileNumber(String mobileNumber) { // ✅ NEW
+    public void setMobileNumber(String mobileNumber) {
         this.mobileNumber = mobileNumber;
     }
 
@@ -168,6 +147,22 @@ public class ServiceRequest {
         this.status = status;
     }
 
+    public Double getServiceCharge() {
+        return serviceCharge;
+    }
+
+    public void setServiceCharge(Double serviceCharge) {
+        this.serviceCharge = serviceCharge;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -176,11 +171,36 @@ public class ServiceRequest {
         this.createdAt = createdAt;
     }
 
+    public String getScheduledDate() {
+        return scheduledDate;
+    }
+
+    public void setScheduledDate(String scheduledDate) {
+        this.scheduledDate = scheduledDate;
+    }
+
+    public String getScheduledTime() {
+        return scheduledTime;
+    }
+
+    public void setScheduledTime(String scheduledTime) {
+        this.scheduledTime = scheduledTime;
+    }
+
+    public String getPaymentStatus() { // ✅ NEW
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) { // ✅ NEW
+        this.paymentStatus = paymentStatus;
+    }
+
     // ================= AUTO FIELDS =================
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.status = "PENDING";
+        this.paymentStatus = "NotConfirm"; // ✅ Default payment status
     }
 }

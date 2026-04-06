@@ -69,3 +69,32 @@
     
   }
 }
+
+/* SWEET ALERT */
+.swal-popup {
+  border-radius: 15px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.swal-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.swal-confirm-btn {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+}
+
+.swal-cancel-btn {
+  background: #ddd;
+  color: #333;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  margin-left: 10px;
+}

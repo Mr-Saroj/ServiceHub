@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Swal from "sweetalert2";
+import "./AvailableRequests.css";
 
 function AvailableRequests({ requests, openAcceptModal }) {
   const [showModal, setShowModal] = useState(false);
@@ -6,28 +8,57 @@ function AvailableRequests({ requests, openAcceptModal }) {
   const [scheduleTime, setScheduleTime] = useState("");
   const [selectedRequestId, setSelectedRequestId] = useState(null);
 
+  // ✅ CUSTOM ALERT
+  const CustomAlert = Swal.mixin({
+    background: "rgba(255,255,255,0.95)",
+    color: "#333",
+    confirmButtonColor: "#4A90E2",
+    backdrop: `rgba(0,0,0,0.4)`,
+    customClass: {
+      popup: "swal-popup",
+      title: "swal-title",
+      confirmButton: "swal-confirm-btn",
+    },
+    buttonsStyling: false,
+  });
+
   /* OPEN MODAL */
   const handleOpen = (id) => {
-    console.log("Selected ID:", id); // ✅ check here
     setSelectedRequestId(id);
     setShowModal(true);
   };
+
   /* CONFIRM */
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!scheduleDate || !scheduleTime) {
-      alert("Please select date & time");
-      return;
+      return CustomAlert.fire({
+        icon: "warning",
+        title: "Missing Details",
+        text: "Please select date & time",
+      });
     }
 
-    openAcceptModal(selectedRequestId, scheduleDate, scheduleTime);
+    try {
+      await openAcceptModal(selectedRequestId, scheduleDate, scheduleTime);
 
-    setShowModal(false);
-    setScheduleDate("");
-    setScheduleTime("");
-    setSelectedRequestId(null);
-    console.log("ID:", selectedRequestId);
-    console.log("DATE:", scheduleDate);
-    console.log("TIME:", scheduleTime);
+      CustomAlert.fire({
+        icon: "success",
+        title: "Job Accepted",
+        text: "You have successfully accepted this job!",
+      });
+
+      setShowModal(false);
+      setScheduleDate("");
+      setScheduleTime("");
+      setSelectedRequestId(null);
+
+    } catch (err) {
+      CustomAlert.fire({
+        icon: "error",
+        title: "Failed",
+        text: "Could not accept job. Try again!",
+      });
+    }
   };
 
   return (
@@ -42,33 +73,29 @@ function AvailableRequests({ requests, openAcceptModal }) {
         <div className="row g-4">
           {requests.map((req) => (
             <div className="col-md-6" key={req.requestId}>
-              <div className="card shadow-sm border-0 h-100">
+              <div className="card shadow-sm border-0 h-100 request-card">
 
-                {/* DAMAGE IMAGE */}
+                {/* IMAGE */}
                 {req.damagePhotoUrl && (
                   <img
                     src={req.damagePhotoUrl}
                     alt="damage"
-                    className="card-img-top"
-                    style={{ height: "200px", objectFit: "cover" }}
+                    className="card-img-top request-img"
                   />
                 )}
 
                 <div className="card-body">
 
-                  {/* CATEGORY */}
                   <h5 className="fw-bold text-primary">
                     {req.category?.name || "Service"}
                   </h5>
 
-                  {/* PROBLEM */}
                   <p className="text-muted">
                     {req.problemDescription}
                   </p>
 
                   <hr />
 
-                  {/* CUSTOMER DETAILS */}
                   <p className="mb-1">
                     👤 <strong>Name:</strong>{" "}
                     {req.customer?.name || "N/A"}
@@ -76,25 +103,21 @@ function AvailableRequests({ requests, openAcceptModal }) {
 
                   <p className="mb-2">
                     📞 <strong>Phone:</strong>{" "}
-                    {req.customer?.phone || "N/A"}
+                    {req.customer?.phone ||
+                      "Available after accepting job"}
                   </p>
 
-                  {/* LOCATION */}
                   <p className="mb-2">
                     📍 <strong>Location:</strong>{" "}
                     {req.locationAddress}
                   </p>
 
-                  {/* STATUS */}
-                  <p>
-                    <span className="badge bg-warning text-dark">
-                      {req.status}
-                    </span>
-                  </p>
+                  <span className="badge bg-warning text-dark">
+                    {req.status}
+                  </span>
 
                 </div>
 
-                {/* ACTION */}
                 <div className="card-footer bg-white border-0">
                   <button
                     className="btn btn-primary w-100"
@@ -113,13 +136,11 @@ function AvailableRequests({ requests, openAcceptModal }) {
       {/* ================= MODAL ================= */}
       {showModal && (
         <>
-          {/* BACKDROP */}
           <div className="modal-backdrop fade show"></div>
 
-          {/* MODAL */}
           <div className="modal fade show d-block">
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
+              <div className="modal-content custom-modal">
 
                 <div className="modal-header">
                   <h5 className="modal-title">Schedule Job</h5>

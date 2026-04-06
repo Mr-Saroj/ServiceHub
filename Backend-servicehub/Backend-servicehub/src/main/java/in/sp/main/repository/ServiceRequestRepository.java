@@ -7,6 +7,7 @@ import in.sp.main.entity.ServiceRequest;
 import in.sp.main.entity.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.time.LocalDateTime;
 
 @Repository
@@ -46,5 +47,24 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
             String status
     );
     List<ServiceRequest> findByTechnicianAndStatus(User technician, String status);
+    
+ // in ServiceRequestRepository.java
+    List<ServiceRequest> findByCustomerAndPaymentStatus(User customer, String paymentStatus);
+    
+    List<ServiceRequest> findByCustomerAndPaymentStatusIsNull(User customer);
+ // Add this method to your ServiceRequestRepository interface
+ // Add this method to your ServiceRequestRepository interface
+    List<ServiceRequest> findByCustomerAndStatusInAndPaymentStatus(User customer, List<String> statuses, String paymentStatus);
+    
+    
+    
+ // Find requests by customer and multiple statuses
+    List<ServiceRequest> findByCustomerAndStatusIn(User customer, List<String> statuses);
+
+    // Find completed requests by customer where paymentStatus = NotConfirm
+    List<ServiceRequest> findByCustomerAndStatusAndPaymentStatus(User customer, String status, String paymentStatus);
+    Optional<ServiceRequest> findByRequestIdAndCustomer_Email(Long requestId, String email);
+    
+    
     
 }

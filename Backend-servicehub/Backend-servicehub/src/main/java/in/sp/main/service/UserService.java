@@ -1,7 +1,11 @@
 package in.sp.main.service;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +26,8 @@ import in.sp.main.security.JwtUtil;
 @Service
 public class UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
     @Autowired
     private UserRepository userRepository;
 
@@ -41,6 +47,7 @@ public class UserService {
     public String registerUser(RegisterRequestDTO dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
+            log.warn("Registration failed - Email already exists: {}", dto.getEmail());
             return "Email already registered!";
         }
 
@@ -50,8 +57,12 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(dto.getRole());
 
-        // ✅ If technician, assign category
-        if ("TECHNICIAN".equals(dto.getRole())) {
+        // ✅ Assign category if technician
+        if ("TECHNICIAN".equalsIgnoreCase(dto.getRole())) {
+
+            if (dto.getCategoryId() == null) {
+                throw new RuntimeException("Category is required for technician");
+            }
 
             ServiceCategory category = categoryRepo.findById(dto.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -61,6 +72,7 @@ public class UserService {
 
         userRepository.save(user);
 
+        log.info("User registered successfully: {}", dto.getEmail());
         return "User Registered Successfully!";
     }
 
@@ -68,35 +80,32 @@ public class UserService {
     public String loginUser(LoginRequestDTO dto) {
 
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("Login failed - User not found: {}", dto.getEmail());
+                    return new RuntimeException("User not found");
+                });
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            log.error("Login failed - Invalid password for: {}", dto.getEmail());
             throw new RuntimeException("Invalid password");
         }
 
-        return jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+        log.info("User logged in successfully: {}", dto.getEmail());
+        return token;
     }
 
     // ================= GET PROFILE =================
     public UserProfileDTO getUserProfile(String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("Profile fetch failed - User not found: {}", email);
+                    return new RuntimeException("User not found");
+                });
 
-        String categoryName = null;
-
-        if (user.getCategory() != null) {
-            categoryName = user.getCategory().getCategoryName();
-        }
-
-        return new UserProfileDTO(
-                user.getName(),
-                user.getEmail(),
-                user.getRole(),
-                categoryName,
-                user.getMobileNumber(),
-                user.getProfileImageUrl()
-        );
+        return mapToDTO(user);
     }
 
     // ================= UPDATE PROFILE =================
@@ -106,43 +115,55 @@ public class UserService {
                                         MultipartFile profileImage) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("Profile update failed - User not found: {}", email);
+                    return new RuntimeException("User not found");
+                });
 
-        // ✅ update fields
+        // ✅ Update basic fields
         user.setName(name);
         user.setMobileNumber(mobileNumber);
 
-        // ✅ Cloudinary upload
+        // ✅ Upload image (Cloudinary)
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                Map uploadResult = cloudinary.uploader().upload(
+                Map<?, ?> uploadResult = cloudinary.uploader().upload(
                         profileImage.getBytes(),
-                        ObjectUtils.emptyMap()
+                        ObjectUtils.asMap("folder", "servicehub/profile")
                 );
 
                 String imageUrl = uploadResult.get("secure_url").toString();
                 user.setProfileImageUrl(imageUrl);
 
-            } catch (Exception e) {
+                log.info("Profile image uploaded for user: {}", email);
+
+            } catch (IOException e) {
+                log.error("Image upload failed for user: {}", email, e);
                 throw new RuntimeException("Image upload failed");
             }
         }
 
         User updatedUser = userRepository.save(user);
 
-        String categoryName = null;
-        if (updatedUser.getCategory() != null) {
-            categoryName = updatedUser.getCategory().getCategoryName();
-        }
+        log.info("Profile updated successfully: {}", email);
 
-        // ✅ return DTO (IMPORTANT)
+        return mapToDTO(updatedUser);
+    }
+
+    // ================= HELPER METHOD =================
+    private UserProfileDTO mapToDTO(User user) {
+
+        String categoryName = Optional.ofNullable(user.getCategory())
+                .map(ServiceCategory::getCategoryName)
+                .orElse(null);
+
         return new UserProfileDTO(
-                updatedUser.getName(),
-                updatedUser.getEmail(),
-                updatedUser.getRole(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
                 categoryName,
-                updatedUser.getMobileNumber(),
-                updatedUser.getProfileImageUrl()
+                user.getMobileNumber(),
+                user.getProfileImageUrl()
         );
     }
 }

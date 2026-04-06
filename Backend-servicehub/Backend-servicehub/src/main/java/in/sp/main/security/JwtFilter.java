@@ -29,21 +29,27 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        System.out.println("Authorization header: " + header); // Debug: see if header is received
+
+        // Debug: check if header is received
+        System.out.println("Authorization header: " + header);
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
             try {
+                // Extract email and role from JWT
                 String email = jwtUtil.extractEmail(token);
                 String role = jwtUtil.extractRole(token);
 
-                // Normalize role: trim, uppercase, remove ROLE_ if present
+                // Normalize role (remove ROLE_ prefix if present, uppercase)
                 role = role.trim().toUpperCase().replace("ROLE_", "");
 
                 System.out.println("JWT email: " + email + ", role: " + role);
 
+                // Set authentication only if not already set
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                    // ✅ Add ROLE_ prefix for Spring Security
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
                     UsernamePasswordAuthenticationToken auth =
@@ -51,16 +57,20 @@ public class JwtFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(auth);
 
-                    System.out.println("Authorities set: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+                    // Debug: verify authorities
+                    System.out.println("Authorities set: " +
+                            SecurityContextHolder.getContext().getAuthentication().getAuthorities());
                 }
 
             } catch (Exception e) {
+                // Invalid token
                 System.out.println("Invalid JWT Token: " + e.getMessage());
             }
         } else {
             System.out.println("No Bearer token found in header.");
         }
 
+        // Continue filter chain
         filterChain.doFilter(request, response);
     }
 }

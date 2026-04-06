@@ -146,10 +146,8 @@ function TechnicianDashboard() {
       );
 
       if (res.ok) {
-        alert("✅ Job Accepted");
         loadAllData(token); // ✅ refresh everything
       } else {
-        alert("❌ Failed");
       }
 
     } catch (error) {
@@ -177,7 +175,6 @@ function TechnicianDashboard() {
       );
 
       if (res.ok) {
-        alert("✅ Job Completed");
         loadAllData(token); // ✅ refresh
       }
 
@@ -248,6 +245,17 @@ function TechnicianDashboard() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+
+  // ================= LOGOUT =================
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to logout?");
+
+    if (!confirmLogout) return;
+
+    localStorage.removeItem("token");
+    window.location.href = "/login";
   };
   return (
     <div className="d-flex flex-column vh-100">
@@ -350,7 +358,10 @@ function TechnicianDashboard() {
                 <li><hr className="dropdown-divider" /></li>
 
                 <li>
-                  <button className="dropdown-item text-danger">
+                  <button
+                    className="dropdown-item text-danger"
+                    onClick={handleLogout}
+                  >
                     <i className="fas fa-sign-out-alt me-2"></i> Logout
                   </button>
                 </li>
@@ -417,16 +428,6 @@ function TechnicianDashboard() {
                   <i className="fas fa-user-circle me-2"></i> Profile
                 </button>
               </li>
-
-              <li className="nav-item mt-2">
-                <button
-                  className={`nav-link text-start w-100 ${activePage === "reviews" ? "active" : "text-white"}`}
-                  onClick={() => handlePageClick("reviews")}
-                >
-                  <i className="fas fa-star me-2"></i> Reviews
-                </button>
-              </li>
-
             </ul>
           </div>
         </div>
@@ -553,15 +554,6 @@ function TechnicianDashboard() {
             </li>
 
             {/* Reviews */}
-            <li className="nav-item mt-2">
-              <button
-                className={`nav-link w-100 ${activePage === "reviews" ? "active" : "text-white"
-                  }`}
-                onClick={() => handlePageClick("reviews")}
-              >
-                <i className="fas fa-star me-2"></i> Reviews
-              </button>
-            </li>
 
           </ul>
         </div>

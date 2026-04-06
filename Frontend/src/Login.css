@@ -125,6 +125,13 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.login-btn:disabled {
+  background-color: #a0c3f5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ================= DIVIDER ================= */
 .divider {
   text-align: center;

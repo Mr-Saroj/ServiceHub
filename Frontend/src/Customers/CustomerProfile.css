@@ -1,0 +1,71 @@
+/* PAGE BACKGROUND */
+.profile-page {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* CARD STYLE */
+.profile-card {
+  border-radius: 15px;
+  transition: 0.3s;
+}
+
+.profile-card:hover {
+  transform: translateY(-5px);
+}
+
+/* PROFILE IMAGE */
+.profile-img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border: 4px solid #f1f1f1;
+  transition: 0.3s;
+}
+
+.profile-img:hover {
+  transform: scale(1.05);
+}
+
+/* PLACEHOLDER */
+.profile-placeholder {
+  width: 150px;
+  height: 150px;
+  font-size: 3rem;
+}
+
+/* IMAGE CONTAINER */
+.profile-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* CAMERA BUTTON */
+.upload-btn {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  background: #4A90E2;
+  color: white;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.upload-btn:hover {
+  transform: scale(1.1);
+}
+
+/* RIGHT CARD */
+.card-header {
+  border-top-left-radius: 15px !important;
+  border-top-right-radius: 15px !important;
+}
+
+/* TEXT SPACING */
+.card-body p {
+  margin: 0;
+}

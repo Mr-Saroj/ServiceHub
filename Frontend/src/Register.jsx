@@ -10,6 +10,7 @@ function Register() {
 
   const [categories, setCategories] = useState([]); // ✅ NEW
   const [selectedCategory, setSelectedCategory] = useState(""); // ✅ NEW
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -68,7 +69,6 @@ function Register() {
       return;
     }
 
-    // ✅ VALIDATE CATEGORY
     if (role === "TECHNICIAN" && !selectedCategory) {
       CustomAlert.fire({
         icon: "warning",
@@ -83,10 +83,12 @@ function Register() {
       email: formData.email.trim(),
       password: formData.password,
       role: role,
-      ...(role === "TECHNICIAN" && { categoryId: selectedCategory }) // ✅ SEND CATEGORY
+      ...(role === "TECHNICIAN" && { categoryId: selectedCategory })
     };
 
     try {
+      setLoading(true); // ✅ START LOADING
+
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/api/auth/register`,
         {
@@ -101,7 +103,6 @@ function Register() {
       const message = await response.text();
 
       if (response.ok) {
-
         CustomAlert.fire({
           icon: "success",
           title: "Account Created!",
@@ -117,20 +118,18 @@ function Register() {
           confirmPassword: "",
         });
 
-        setSelectedCategory(""); // ✅ RESET
+        setSelectedCategory("");
 
         setTimeout(() => {
           navigate("/login");
         }, 1800);
 
       } else {
-
         CustomAlert.fire({
           icon: "error",
           title: "Registration Failed",
           text: message || "Registration failed!"
         });
-
       }
 
     } catch (error) {
@@ -141,9 +140,10 @@ function Register() {
         title: "Server Error",
         text: "Server error! Please try again later."
       });
+    } finally {
+      setLoading(false); // ✅ STOP LOADING
     }
   };
-
   return (
     <main className="register-main">
       <div className="register-container">
@@ -295,8 +295,12 @@ function Register() {
             </label>
           </div>
 
-          <button type="submit" className="register-btn">
-            Create Account
+          <button
+            type="submit"
+            className="register-btn"
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Create Account"}
           </button>
         </form>
 

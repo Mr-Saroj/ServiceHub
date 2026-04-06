@@ -18,6 +18,7 @@ function Login() {
             [e.target.id]: e.target.value
         });
     };
+    const [loading, setLoading] = useState(false);
 
     // ✅ Custom Styled Alert
     const CustomAlert = Swal.mixin({
@@ -32,66 +33,70 @@ function Login() {
         buttonsStyling: false
     });
 
-   const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-        });
+        try {
+            setLoading(true); // ✅ START LOADING
 
-        if (!response.ok) {
-            const errorText = await response.text();
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+
+                CustomAlert.fire({
+                    icon: "error",
+                    title: "Login Failed",
+                    text: errorText
+                });
+
+                return;
+            }
+
+            let token = await response.text();
+
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+
+            localStorage.setItem("token", token);
+
+            CustomAlert.fire({
+                icon: "success",
+                title: "Login Successful!",
+                text: "Welcome back to ServiceHub",
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            const payload = JSON.parse(atob(token.split(".")[1]));
+
+            setTimeout(() => {
+                if (payload.role === "CUSTOMER") {
+                    navigate("/customerdashboard");
+                } else if (payload.role === "TECHNICIAN") {
+                    navigate("/techniciandashboard");
+                }
+            }, 1500);
+
+        } catch (error) {
+            console.error("Error:", error);
 
             CustomAlert.fire({
                 icon: "error",
-                title: "Login Failed",
-                text: errorText
+                title: "Server Error",
+                text: "Something went wrong. Please try again."
             });
-
-            return;
+        } finally {
+            setLoading(false); // ✅ STOP LOADING
         }
-
-        let token = await response.text();
-
-        // Remove Bearer if backend sends it
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-
-        localStorage.setItem("token", token);
-
-        CustomAlert.fire({
-            icon: "success",
-            title: "Login Successful!",
-            text: "Welcome back to ServiceHub",
-            timer: 1500,
-            showConfirmButton: false
-        });
-
-        const payload = JSON.parse(atob(token.split(".")[1]));
-
-        if (payload.role === "CUSTOMER") {
-            navigate("/customerdashboard");
-        } else if (payload.role === "TECHNICIAN") {
-            navigate("/techniciandashboard");
-        }
-
-    } catch (error) {
-        console.error("Error:", error);
-
-        CustomAlert.fire({
-            icon: "error",
-            title: "Server Error",
-            text: "Something went wrong. Please try again."
-        });
-    }
-};
-
+    };
     return (
         <main className="login-main">
             <div className="login-container">
@@ -144,8 +149,12 @@ function Login() {
                         </a>
                     </div>
 
-                    <button type="submit" className="login-btn">
-                        Login
+                    <button
+                        type="submit"
+                        className="login-btn"
+                        disabled={loading}
+                    >
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
 

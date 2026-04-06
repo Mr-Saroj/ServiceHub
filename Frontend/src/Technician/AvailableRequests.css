@@ -1,0 +1,45 @@
+/* CARD IMAGE */
+.request-img {
+  height: 200px;
+  object-fit: cover;
+}
+
+/* CARD HOVER */
+.request-card {
+  transition: 0.3s;
+}
+
+.request-card:hover {
+  transform: translateY(-5px);
+}
+
+/* MODAL DESIGN */
+.custom-modal {
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+/* SWEET ALERT DESIGN */
+.swal-popup {
+  border-radius: 15px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.swal-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.swal-confirm-btn {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  transition: 0.3s;
+}
+
+.swal-confirm-btn:hover {
+  transform: scale(1.05);
+}

@@ -2,19 +2,18 @@ import React, { useState } from "react";
 
 function Dashboard({ requests, refreshRequests, token }) {
   const [openTrackId, setOpenTrackId] = useState(null);
+  const [payLoadingId, setPayLoadingId] = useState(null);
 
+  // ✅ Delete a request
   const deleteRequest = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this request?");
-    if (!confirmDelete) return;
+    if (!window.confirm("Are you sure you want to delete this request?")) return;
 
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/${id}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
@@ -22,17 +21,55 @@ function Dashboard({ requests, refreshRequests, token }) {
         alert("Request deleted successfully");
         refreshRequests();
       } else {
-        alert("Failed to delete request");
+        const text = await res.text();
+        alert("Failed to delete request: " + text);
       }
     } catch (error) {
       console.error("Delete error:", error);
+      alert("Error deleting request: " + error.message);
     }
   };
 
-  const selectedRequest = requests.find(
-    (r) => r.requestId === openTrackId
-  );
+  // ✅ Payment handler
+  const handlePayment = async (requestId) => {
+    if (!window.confirm("Proceed with payment?")) return;
 
+    try {
+      setPayLoadingId(requestId);
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/requests/${requestId}/confirm-payment`,
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token },
+        }
+      );
+
+      if (res.ok) {
+        alert("Only COD is available for now. Payment marked as completed.");
+
+        // Update local requests immediately
+        const updatedRequests = requests.map((req) =>
+          req.requestId === requestId
+            ? { ...req, paymentStatus: "PAID" }
+            : req
+        );
+        refreshRequests(updatedRequests);
+      } else {
+        const text = await res.text();
+        alert("Payment failed ❌: " + text);
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("Payment error ❌: " + error.message);
+    } finally {
+      setPayLoadingId(null);
+    }
+  };
+
+  const selectedRequest = requests.find((r) => r.requestId === openTrackId);
+
+  // ✅ Helper to get bootstrap badge class for status
   const getStatusBadgeClass = (status) => {
     switch (status.toLowerCase()) {
       case "pending":
@@ -48,21 +85,21 @@ function Dashboard({ requests, refreshRequests, token }) {
     }
   };
 
+  // ✅ Step tracking logic
   const isStepCompleted = (currentStatus, step) => {
     const order = ["PENDING", "ACCEPTED", "ON_THE_WAY", "COMPLETED"];
-    return order.indexOf(currentStatus) >= order.indexOf(step);
+    return order.indexOf(currentStatus.toUpperCase()) >= order.indexOf(step);
   };
 
-  const isActiveStep = (currentStatus, step) => {
-    return currentStatus === step;
-  };
+  const isActiveStep = (currentStatus, step) =>
+    currentStatus.toUpperCase() === step;
 
   return (
     <>
       <h3 className="mb-4">Your Requests</h3>
 
       {requests.map((req) => (
-        <div key={req.requestId} className="card mb-4">
+        <div key={req.requestId} className="card mb-4 shadow-sm">
           <div className="row g-0">
             {req.damagePhotoUrl && (
               <div className="col-md-4">
@@ -74,23 +111,19 @@ function Dashboard({ requests, refreshRequests, token }) {
                 />
               </div>
             )}
+
             <div className={`col-md-${req.damagePhotoUrl ? "8" : "12"}`}>
               <div className="card-body">
                 <h4 className="card-title">
                   Category: {req.category?.categoryName}
                 </h4>
+                <p className="card-text">Description: {req.problemDescription}</p>
                 <p className="card-text">
-                  Description: {req.problemDescription}
+                  <i className="bi bi-geo-alt me-2"></i>Location: {req.locationAddress}
                 </p>
                 <p className="card-text">
-                  <i className="bi bi-geo-alt me-2"></i>
-                  Location: {req.locationAddress}
-                </p>
-                <p className="card-text">
-                  Status:
-                  <span
-                    className={`badge ms-2 ${getStatusBadgeClass(req.status)}`}
-                  >
+                  Status:{" "}
+                  <span className={`badge ms-2 ${getStatusBadgeClass(req.status)}`}>
                     {req.status}
                   </span>
                 </p>
@@ -100,6 +133,7 @@ function Dashboard({ requests, refreshRequests, token }) {
                     <button
                       className="btn btn-danger w-100"
                       onClick={() => deleteRequest(req.requestId)}
+                      disabled={req.status.toUpperCase() === "COMPLETED"}
                     >
                       Cancel
                     </button>
@@ -113,6 +147,19 @@ function Dashboard({ requests, refreshRequests, token }) {
                       View Details
                     </button>
                   </div>
+
+                  {req.status.toUpperCase() === "COMPLETED" &&
+                    req.paymentStatus !== "PAID" && (
+                      <div className="col-12 col-md-auto">
+                        <button
+                          className="btn btn-success w-100"
+                          onClick={() => handlePayment(req.requestId)}
+                          disabled={payLoadingId === req.requestId}
+                        >
+                          {payLoadingId === req.requestId ? "Processing..." : "💳 Pay"}
+                        </button>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -120,19 +167,18 @@ function Dashboard({ requests, refreshRequests, token }) {
         </div>
       ))}
 
+      {/* Modal for tracking */}
       {selectedRequest && (
         <div
           className="modal fade show d-block"
-          tabIndex="-1"
-          role="dialog"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
           <div
             className="modal-dialog modal-dialog-right modal-lg"
             style={{
               position: "fixed",
-              right: "0",
-              margin: "0",
+              right: 0,
+              margin: 0,
               height: "700px",
               maxWidth: "500px",
               zIndex: 1050,
@@ -141,8 +187,7 @@ function Dashboard({ requests, refreshRequests, token }) {
             <div className="modal-content h-100 border-0 shadow-lg">
               <div className="modal-header bg-primary text-white">
                 <h5 className="modal-title">
-                  <i className="bi bi-person-gear me-2"></i>
-                  Technician Details
+                  <i className="bi bi-person-gear me-2"></i>Technician Details
                 </h5>
                 <button
                   type="button"
@@ -154,9 +199,15 @@ function Dashboard({ requests, refreshRequests, token }) {
               <div className="modal-body p-0" style={{ overflowY: "auto" }}>
                 <div className="card border-0 bg-light">
                   <div className="card-body">
-                    <h5>{selectedRequest.technician?.name || "Not Assigned Yet"}</h5>
+                    <h5>
+                      {selectedRequest.technician?.name || "Not Assigned Yet"}
+                    </h5>
                     <p className="text-muted">Service Technician</p>
-
+                    <p>
+                      <i className="bi bi-telephone me-2"></i>
+                      <strong>Technician Mobile:</strong>{" "}
+                      {selectedRequest.technician?.mobileNumber || "Not Available"}
+                    </p>
                     <p>
                       <i className="bi bi-calendar-event me-2"></i>
                       <strong>Date:</strong>{" "}
@@ -169,74 +220,54 @@ function Dashboard({ requests, refreshRequests, token }) {
                     </p>
                     <p>
                       <i className="bi bi-geo-alt me-2"></i>
-                      <strong>Location:</strong>{" "}
-                      {selectedRequest.locationAddress}
+                      <strong>Location:</strong> {selectedRequest.locationAddress}
                     </p>
                   </div>
                 </div>
 
                 <div className="p-4">
                   <h4 className="mb-4">
-                    <i className="bi bi-map me-2"></i>
-                    Order Tracking
+                    <i className="bi bi-map me-2"></i>Order Tracking
                   </h4>
-
                   <div className="tracking-timeline">
-
-                    {/* PENDING */}
-                    <div className={`tracking-step 
-                      ${isStepCompleted(selectedRequest.status, "PENDING") ? "completed" : "pending"}
-                      ${isActiveStep(selectedRequest.status, "PENDING") ? "active" : ""}
-                    `}>
-                      <div className="step-icon">
-                        <i className="bi bi-hourglass-split"></i>
-                      </div>
-                      <div className="step-content">
-                        <h6>Request Pending</h6>
-                      </div>
-                    </div>
-
-                    {/* ACCEPTED */}
-                    <div className={`tracking-step 
-                      ${isStepCompleted(selectedRequest.status, "ACCEPTED") ? "completed" : "pending"}
-                      ${isActiveStep(selectedRequest.status, "ACCEPTED") ? "active" : ""}
-                    `}>
-                      <div className="step-icon">
-                        <i className="bi bi-person-check"></i>
-                      </div>
-                      <div className="step-content">
-                        <h6>Technician Assigned</h6>
-                      </div>
-                    </div>
-
-                    {/* ON THE WAY */}
-                    <div className={`tracking-step 
-                      ${isStepCompleted(selectedRequest.status, "ON_THE_WAY") ? "completed" : "pending"}
-                      ${isActiveStep(selectedRequest.status, "ON_THE_WAY") ? "active" : ""}
-                    `}>
-                      <div className="step-icon">
-                        <i className="bi bi-truck"></i>
-                      </div>
-                      <div className="step-content">
-                        <h6>On The Way</h6>
-                      </div>
-                    </div>
-
-                    {/* COMPLETED */}
-                    <div className={`tracking-step 
-                      ${isStepCompleted(selectedRequest.status, "COMPLETED") ? "completed" : "pending"}
-                      ${isActiveStep(selectedRequest.status, "COMPLETED") ? "active" : ""}
-                    `}>
-                      <div className="step-icon">
-                        <i className="bi bi-check-circle"></i>
-                      </div>
-                      <div className="step-content">
-                        <h6>Service Completed</h6>
-                      </div>
-                    </div>
-
+                    {["PENDING", "ACCEPTED", "ON_THE_WAY", "COMPLETED"].map(
+                      (step, index) => (
+                        <div
+                          key={index}
+                          className={`tracking-step ${
+                            isStepCompleted(selectedRequest.status, step)
+                              ? "completed"
+                              : "pending"
+                          } ${isActiveStep(selectedRequest.status, step) ? "active" : ""}`}
+                        >
+                          <div className="step-icon">
+                            <i
+                              className={`bi ${
+                                step === "PENDING"
+                                  ? "bi-hourglass-split"
+                                  : step === "ACCEPTED"
+                                  ? "bi-person-check"
+                                  : step === "ON_THE_WAY"
+                                  ? "bi-truck"
+                                  : "bi-check-circle"
+                              }`}
+                            ></i>
+                          </div>
+                          <div className="step-content">
+                            <h6>
+                              {step === "PENDING"
+                                ? "Request Pending"
+                                : step === "ACCEPTED"
+                                ? "Technician Assigned"
+                                : step === "ON_THE_WAY"
+                                ? "On The Way"
+                                : "Service Completed"}
+                            </h6>
+                          </div>
+                        </div>
+                      )
+                    )}
                   </div>
-
                   <div className="alert alert-info mt-3">
                     Current Status: <strong>{selectedRequest.status}</strong>
                   </div>
@@ -251,8 +282,7 @@ function Dashboard({ requests, refreshRequests, token }) {
                   Close
                 </button>
                 <button className="btn btn-primary">
-                  <i className="bi bi-telephone me-2"></i>
-                  Contact Technician
+                  <i className="bi bi-telephone me-2"></i>Contact Technician
                 </button>
               </div>
             </div>
