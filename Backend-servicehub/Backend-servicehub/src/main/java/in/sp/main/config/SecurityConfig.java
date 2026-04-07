@@ -1,9 +1,11 @@
 package in.sp.main.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -19,78 +21,99 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 import in.sp.main.security.JwtFilter;
-@EnableMethodSecurity(prePostEnabled = true)
 
+@EnableMethodSecurity(prePostEnabled = true)
 @Configuration
 public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
 
+    // ✅ Inject environment variable
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // Disable CSRF for API usage (Postman, frontend)
+            // ✅ Disable CSRF
             .csrf(csrf -> csrf.disable())
 
-            // Enable CORS with configuration
+            // ✅ Enable CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // Stateless session; we rely on JWT
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            // ✅ Stateless session (JWT)
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // Authorization rules
+            // ✅ Authorization rules
             .authorizeHttpRequests(auth -> auth
 
-                    // Public endpoints (login, register, categories, uploads)
+                    // ✅ VERY IMPORTANT: allow preflight request
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                    // Public endpoints
                     .requestMatchers(
                             "/api/auth/**",
                             "/api/categories",
                             "/uploads/**"
                     ).permitAll()
 
-                    // Customer APIs (requires CUSTOMER role)
+                    // Customer APIs
                     .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
 
-                    // Payment API for customers
+                    // Payment API
                     .requestMatchers("/api/invoice/pay/**").hasRole("CUSTOMER")
 
-                    // Technician APIs (requires TECHNICIAN role)
+                    // Technician APIs
                     .requestMatchers("/api/technician/**").hasRole("TECHNICIAN")
 
-                    // Other invoice endpoints (only TECHNICIAN)
+                    // Invoice APIs
                     .requestMatchers("/api/invoice/**").hasRole("TECHNICIAN")
 
-                    // User profile endpoints
+                    // User profile
                     .requestMatchers("/api/user/**").authenticated()
 
-                    // Any other endpoint requires authentication
+                    // Others
                     .anyRequest().authenticated()
             )
 
-            // Add JWT filter before the default authentication filter
+            // ✅ JWT filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // AuthenticationManager bean (needed if you have JWT login)
+    // ✅ AuthenticationManager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // CORS configuration
+    // ✅ CORS Configuration using ENV
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // React frontend
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+
         configuration.setAllowCredentials(true);
+
+        // ✅ Use Render ENV variable
+        configuration.setAllowedOrigins(List.of(frontendUrl));
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of("*"));
+
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
